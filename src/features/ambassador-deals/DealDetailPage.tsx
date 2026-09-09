@@ -336,6 +336,13 @@ export function DealDetailPage() {
                 <p className="eyebrow">Ambassador</p>
                 <strong>{deal.ambassador.name || 'You'}</strong>
               </div>
+              <ButtonLink
+                to={`/app/ambassador/messages?with=${deal.business.id}`}
+                variant="secondary"
+                size="sm"
+              >
+                Message Business
+              </ButtonLink>
               <div>
                 <p className="eyebrow">Campaign version</p>
                 <strong>v{deal.campaign_version.version_number ?? '—'}</strong>

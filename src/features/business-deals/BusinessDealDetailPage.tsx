@@ -382,9 +382,16 @@ export function BusinessDealDetailPage() {
               <h3>Ambassador</h3>
               <strong>{deal.ambassador.name || `Ambassador #${deal.ambassador.id}`}</strong>
               <p className="form-section__lead">
-                Messages with Ambassadors land in a later slice. Relationship chat is not linked
-                from Deals yet.
+                Opens the Business↔Ambassador conversation for this person. Chat is not owned by
+                this Deal.
               </p>
+              <ButtonLink
+                to={`/app/business/messages?with=${deal.ambassador.id}`}
+                variant="secondary"
+                size="sm"
+              >
+                Message Ambassador
+              </ButtonLink>
             </div>
 
             <div className="card stack">

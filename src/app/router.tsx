@@ -37,6 +37,7 @@ import { BusinessDealDetailPage } from '@/features/business-deals/BusinessDealDe
 import { ParticipantDisputeListPage } from '@/features/participant-disputes/ParticipantDisputeListPage'
 import { ParticipantDisputeDetailPage } from '@/features/participant-disputes/ParticipantDisputeDetailPage'
 import { ParticipantNotificationsPage } from '@/features/participant-notifications/ParticipantNotificationsPage'
+import { ParticipantMessagesPage } from '@/features/participant-messages/ParticipantMessagesPage'
 
 export function AppRouter() {
   return useRoutes([
@@ -99,12 +100,11 @@ export function AppRouter() {
             },
             {
               path: 'messages',
-              element: (
-                <PlaceholderDesk
-                  title="Messages"
-                  description="Business ↔ Ambassador chat comes later."
-                />
-              ),
+              element: <ParticipantMessagesPage role="BUSINESS" />,
+            },
+            {
+              path: 'messages/:conversationId',
+              element: <ParticipantMessagesPage role="BUSINESS" />,
             },
             {
               path: 'commissions',
@@ -186,9 +186,11 @@ export function AppRouter() {
             },
             {
               path: 'messages',
-              element: (
-                <PlaceholderDesk title="Messages" description="Chat with businesses comes later." />
-              ),
+              element: <ParticipantMessagesPage role="AMBASSADOR" />,
+            },
+            {
+              path: 'messages/:conversationId',
+              element: <ParticipantMessagesPage role="AMBASSADOR" />,
             },
             {
               path: 'verification',
