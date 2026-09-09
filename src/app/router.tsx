@@ -36,6 +36,7 @@ import { BusinessDealListPage } from '@/features/business-deals/BusinessDealList
 import { BusinessDealDetailPage } from '@/features/business-deals/BusinessDealDetailPage'
 import { ParticipantDisputeListPage } from '@/features/participant-disputes/ParticipantDisputeListPage'
 import { ParticipantDisputeDetailPage } from '@/features/participant-disputes/ParticipantDisputeDetailPage'
+import { ParticipantNotificationsPage } from '@/features/participant-notifications/ParticipantNotificationsPage'
 
 export function AppRouter() {
   return useRoutes([
@@ -123,6 +124,10 @@ export function AppRouter() {
               element: <ParticipantDisputeDetailPage role="BUSINESS" />,
             },
             {
+              path: 'notifications',
+              element: <ParticipantNotificationsPage role="BUSINESS" />,
+            },
+            {
               path: 'verification',
               element: (
                 <PlaceholderDesk
@@ -196,7 +201,7 @@ export function AppRouter() {
             },
             {
               path: 'notifications',
-              element: <PlaceholderDesk title="Notifications" description="Inbox placeholder." />,
+              element: <ParticipantNotificationsPage role="AMBASSADOR" />,
             },
             {
               path: 'settings',

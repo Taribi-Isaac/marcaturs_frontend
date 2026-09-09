@@ -654,3 +654,105 @@
     transform: translateY(0);
   }
 }
+
+.notification-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.notification-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.notification-item.is-unread {
+  border-color: #c9d9d3;
+  background: linear-gradient(180deg, rgb(13 107 92 / 5%), var(--color-surface) 42%);
+}
+
+.notification-item__trigger {
+  display: grid;
+  gap: 0.45rem;
+  width: 100%;
+  padding: var(--space-4);
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.notification-item__trigger:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.notification-item__top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.notification-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.notification-item__title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.notification-item.is-unread .notification-item__title {
+  font-weight: 800;
+}
+
+.notification-item.is-read .notification-item__title {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.notification-item__body {
+  color: var(--color-muted);
+  margin: 0;
+  max-width: 48rem;
+}
+
+.notification-item__detail {
+  padding: 0 var(--space-4) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-4);
+}
+
+.notification-unread-marker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 1.6rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-sm);
+  background: #e8f3ef;
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.notification-unread-marker::before {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+}

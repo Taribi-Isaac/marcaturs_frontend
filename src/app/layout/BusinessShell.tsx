@@ -9,6 +9,7 @@ const businessLinks = [
   { to: '/app/business/messages', label: 'Messages' },
   { to: '/app/business/commissions', label: 'Commissions' },
   { to: '/app/business/disputes', label: 'Disputes' },
+  { to: '/app/business/notifications', label: 'Notifications' },
   { to: '/app/business/verification', label: 'Verification' },
   { to: '/app/business/settings', label: 'Settings' },
 ]
