@@ -32,6 +32,8 @@ import { DealDetailPage } from '@/features/ambassador-deals/DealDetailPage'
 import { CreateDealPage } from '@/features/ambassador-deals/CreateDealPage'
 import { EarningsPage } from '@/features/ambassador-deals/EarningsPage'
 import { OfficialPaymentPage } from '@/features/ambassador-deals/OfficialPaymentPage'
+import { BusinessDealListPage } from '@/features/business-deals/BusinessDealListPage'
+import { BusinessDealDetailPage } from '@/features/business-deals/BusinessDealDetailPage'
 
 export function AppRouter() {
   return useRoutes([
@@ -86,12 +88,11 @@ export function AppRouter() {
             },
             {
               path: 'deals',
-              element: (
-                <PlaceholderDesk
-                  title="Deals"
-                  description="Business Deal investigation and confirmation UX will land after foundation."
-                />
-              ),
+              element: <BusinessDealListPage />,
+            },
+            {
+              path: 'deals/:id',
+              element: <BusinessDealDetailPage />,
             },
             {
               path: 'messages',
