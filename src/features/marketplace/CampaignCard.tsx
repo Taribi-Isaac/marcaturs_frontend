@@ -16,7 +16,7 @@ export function CampaignCard({ campaign }: { campaign: MarketplaceCampaignCard }
       <p className="campaign-card__product">
         {campaign.product_name || 'Product opportunity'} · {businessDisplayName(campaign)}
       </p>
-      <div className="row" style={{ justifyContent: 'space-between' }}>
+      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'end' }}>
         <span className="campaign-card__commission">{formatCommission(campaign)}</span>
         <span style={{ color: 'var(--color-muted)', fontSize: '0.85rem' }}>
           {campaign.price_amount
@@ -24,6 +24,7 @@ export function CampaignCard({ campaign }: { campaign: MarketplaceCampaignCard }
             : campaign.service_area || 'See details'}
         </span>
       </div>
+      <p className="campaign-card__cta">View offer →</p>
     </Link>
   )
 }

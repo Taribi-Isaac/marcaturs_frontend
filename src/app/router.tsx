@@ -26,6 +26,12 @@ import {
 import { CampaignListPage } from '@/features/business-campaigns/CampaignListPage'
 import { CampaignCreatePage } from '@/features/business-campaigns/CampaignCreatePage'
 import { BusinessCampaignDetailPage } from '@/features/business-campaigns/BusinessCampaignDetailPage'
+import { AmbassadorDiscoverPage } from '@/features/ambassador-deals/AmbassadorDiscoverPage'
+import { DealListPage } from '@/features/ambassador-deals/DealListPage'
+import { DealDetailPage } from '@/features/ambassador-deals/DealDetailPage'
+import { CreateDealPage } from '@/features/ambassador-deals/CreateDealPage'
+import { EarningsPage } from '@/features/ambassador-deals/EarningsPage'
+import { OfficialPaymentPage } from '@/features/ambassador-deals/OfficialPaymentPage'
 
 export function AppRouter() {
   return useRoutes([
@@ -35,6 +41,7 @@ export function AppRouter() {
         { path: '/', element: <HomePage /> },
         { path: '/discover', element: <DiscoverPage /> },
         { path: '/campaigns/:id', element: <CampaignDetailPage /> },
+        { path: '/pay/:token', element: <OfficialPaymentPage /> },
         { path: '/how-it-works', element: <HowItWorksPage /> },
         { path: '/for-businesses', element: <ForBusinessesPage /> },
         { path: '/for-ambassadors', element: <ForAmbassadorsPage /> },
@@ -144,28 +151,30 @@ export function AppRouter() {
           children: [
             {
               index: true,
-              element: (
-                <PlaceholderDesk
-                  title="Discover"
-                  description="Browse the public marketplace to find campaigns. Full in-app discovery filters arrive with the marketplace slice — open Discover for live opportunities."
-                />
-              ),
+              element: <AmbassadorDiscoverPage />,
             },
             {
               path: 'deals',
-              element: (
-                <PlaceholderDesk
-                  title="Deals"
-                  description="Ambassador Deal creation and tracking will be implemented in a later vertical slice."
-                />
-              ),
+              element: <DealListPage />,
+            },
+            {
+              path: 'deals/new',
+              element: <CreateDealPage />,
+            },
+            {
+              path: 'deals/:id',
+              element: <DealDetailPage />,
             },
             {
               path: 'earnings',
+              element: <EarningsPage />,
+            },
+            {
+              path: 'disputes',
               element: (
                 <PlaceholderDesk
-                  title="Earnings"
-                  description="Commission due/paid/received views will land with the commission slice."
+                  title="Disputes"
+                  description="Open disputes linked from Deals. Full dispute workflows remain a later slice."
                 />
               ),
             },

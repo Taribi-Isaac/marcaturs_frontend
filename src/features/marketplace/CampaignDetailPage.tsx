@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
+import { AmbassadorResourceImage } from '@/features/ambassador-deals/AmbassadorResourceImage'
+import { campaignAllowsNewDeals } from '@/features/ambassador-deals/helpers'
+import { useAuth } from '@/features/auth/authContext'
 import { fetchMarketplaceCampaign } from '@/features/marketplace/api'
 import { businessDisplayName, formatCommission, formatMoney } from '@/features/marketplace/format'
+import { images } from '@/shared/content/images'
 import { ButtonLink } from '@/shared/ui/Button'
 import { ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
 
@@ -18,6 +22,10 @@ function Block({ title, body }: { title: string; body?: string | null }) {
 export function CampaignDetailPage() {
   const params = useParams()
   const id = Number(params.id)
+  const { user, status } = useAuth()
+  const isAmbassador = status === 'authenticated' && user?.role === 'AMBASSADOR'
+  const isBusiness = status === 'authenticated' && user?.role === 'BUSINESS'
+  const isGuest = status === 'unauthenticated' || status === 'unknown'
 
   const query = useQuery({
     queryKey: ['marketplace', 'campaign', id],
@@ -40,6 +48,11 @@ export function CampaignDetailPage() {
 
   const campaign = query.data
   const business = businessDisplayName(campaign)
+  const eligible = campaignAllowsNewDeals(campaign.status)
+  const imageResources = (campaign.marketing_resources || []).filter(
+    (resource) => resource.type === 'image' || resource.mime_type?.startsWith('image/'),
+  )
+  const leadImage = imageResources[0]
 
   return (
     <>
@@ -47,10 +60,25 @@ export function CampaignDetailPage() {
         title={campaign.title}
         description={`${campaign.product_name || campaign.title} — ${formatCommission(campaign)}`}
       />
-      <section className="page-hero">
-        <div className="container">
+      <section className="campaign-visual-hero">
+        <div className="campaign-visual-hero__media" aria-hidden={!leadImage}>
+          {isAmbassador && leadImage ? (
+            <AmbassadorResourceImage
+              campaignId={campaign.id}
+              resourceId={leadImage.id}
+              title={leadImage.title}
+              className="campaign-visual-hero__img"
+            />
+          ) : (
+            <img src={images.business.src} alt="" className="campaign-visual-hero__img" />
+          )}
+          <div className="campaign-visual-hero__scrim" />
+        </div>
+        <div className="container campaign-visual-hero__content">
           <p style={{ marginBottom: '0.75rem' }}>
-            <Link to="/discover">← Discover</Link>
+            <Link to="/discover" style={{ color: '#d7e7e0' }}>
+              ← Discover
+            </Link>
           </p>
           <div className="row" style={{ marginBottom: '1rem' }}>
             {campaign.category ? (
@@ -60,10 +88,10 @@ export function CampaignDetailPage() {
             <span className="badge badge--neutral">{campaign.status}</span>
           </div>
           <h1>{campaign.title}</h1>
-          <p>
-            {campaign.product_name || 'Product opportunity'} from {business}.{' '}
-            {formatCommission(campaign)}.
+          <p className="campaign-visual-hero__lead">
+            {campaign.product_name || 'Product opportunity'} from {business}.
           </p>
+          <p className="campaign-visual-hero__commission">{formatCommission(campaign)}</p>
         </div>
       </section>
 
@@ -77,6 +105,7 @@ export function CampaignDetailPage() {
               </p>
             </div>
             <Block title="Qualifying conditions" body={campaign.qualifying_conditions} />
+            <Block title="Commission trigger" body={campaign.commission_trigger_description} />
             <Block title="Approved claims" body={campaign.approved_claims} />
             <Block title="Prohibited claims" body={campaign.prohibited_claims} />
             <Block title="Brand rules" body={campaign.brand_use_rules} />
@@ -101,13 +130,42 @@ export function CampaignDetailPage() {
                 </ul>
               </div>
             ) : null}
+            {isAmbassador && campaign.marketing_resources?.length ? (
+              <div className="prose-block">
+                <h3>Campaign resources</h3>
+                <p style={{ color: 'var(--color-muted)' }}>
+                  Downloadable assets for this opportunity. Storage paths are never exposed.
+                </p>
+                <ul className="resource-meta-list">
+                  {campaign.marketing_resources.map((resource) => (
+                    <li key={resource.id}>
+                      <strong>{resource.title || resource.type}</strong>
+                      <span className="campaign-row__meta"> · {resource.type}</span>
+                    </li>
+                  ))}
+                </ul>
+                {imageResources.length > 1 ? (
+                  <div className="resource-image-grid">
+                    {imageResources.slice(1, 4).map((resource) => (
+                      <AmbassadorResourceImage
+                        key={resource.id}
+                        campaignId={campaign.id}
+                        resourceId={resource.id}
+                        title={resource.title}
+                        className="resource-image-grid__img"
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <aside className="detail-aside stack">
             <div className="card stack">
               <div>
                 <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>Commission</p>
-                <strong style={{ fontSize: '1.25rem', color: 'var(--color-primary)' }}>
+                <strong className="commission-hero__value" style={{ fontSize: '1.65rem' }}>
                   {formatCommission(campaign)}
                 </strong>
               </div>
@@ -136,8 +194,8 @@ export function CampaignDetailPage() {
                 </div>
               ) : null}
               <div className="alert alert--info">
-                Payment destination shown publicly is limited to destination name and provider.
-                Account identifiers are not exposed here.
+                Customers pay the Business directly. Account identifiers stay on the Official
+                Payment page — not on this public listing.
                 {(campaign.payment_destination_name || campaign.payment_provider) && (
                   <p style={{ marginTop: '0.75rem' }}>
                     <strong>{campaign.payment_destination_name || 'Business destination'}</strong>
@@ -145,10 +203,49 @@ export function CampaignDetailPage() {
                   </p>
                 )}
               </div>
-              <ButtonLink to="/register?role=AMBASSADOR">Create ambassador account</ButtonLink>
-              <ButtonLink to="/login" variant="secondary">
-                Sign in to participate
-              </ButtonLink>
+
+              {isAmbassador ? (
+                eligible ? (
+                  <>
+                    <ButtonLink to={`/app/ambassador/deals/new?campaign=${campaign.id}`}>
+                      Create Deal
+                    </ButtonLink>
+                    <p className="form-section__lead">
+                      Get paid when the Business confirms your customer&apos;s payment.
+                    </p>
+                  </>
+                ) : (
+                  <div className="alert alert--warning">
+                    New Deals are only available while this campaign is active or expiring. Current
+                    status: {campaign.status}.
+                  </div>
+                )
+              ) : null}
+
+              {isBusiness ? (
+                <div className="alert alert--info">
+                  You&apos;re signed in as a Business. Deal creation is an Ambassador action.
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <ButtonLink to="/app/business/campaigns" variant="secondary">
+                      Open business campaigns
+                    </ButtonLink>
+                  </div>
+                </div>
+              ) : null}
+
+              {isGuest ? (
+                <>
+                  <p className="form-section__lead">
+                    Ambassadors create Deals from eligible campaigns. Guests can browse freely.
+                  </p>
+                  <ButtonLink to={`/login?next=${encodeURIComponent(`/campaigns/${campaign.id}`)}`}>
+                    Sign in to create a Deal
+                  </ButtonLink>
+                  <ButtonLink to="/register?role=AMBASSADOR" variant="secondary">
+                    Create ambassador account
+                  </ButtonLink>
+                </>
+              ) : null}
             </div>
             <div className="card">
               <h3 style={{ fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>

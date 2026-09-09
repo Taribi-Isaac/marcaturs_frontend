@@ -96,6 +96,12 @@ const server = setupServer(
     currentUser = null
     return HttpResponse.json({ success: true, data: null })
   }),
+  http.get('/api/v1/categories', () =>
+    HttpResponse.json({
+      success: true,
+      data: [{ id: 1, name: 'Energy', slug: 'energy', listing_status: 'allowed', sort_order: 1 }],
+    }),
+  ),
   http.get('/api/v1/marketplace/campaigns', () =>
     HttpResponse.json({
       success: true,
@@ -116,6 +122,12 @@ const server = setupServer(
         payment_provider: 'Bank transfer',
         marketing_links: [],
         marketing_resources: [],
+        official_payment: {
+          token: 'tok',
+          path: '/api/v1/public/official-payment-information/tok',
+          share_path: '/pay/tok',
+          share_url: null,
+        },
       },
     }),
   ),
@@ -153,7 +165,7 @@ describe('public experience', () => {
   it('routes discover and campaign detail', async () => {
     renderApp('/discover')
     expect(
-      await screen.findByRole('heading', { name: /discover opportunities/i }),
+      await screen.findByRole('heading', { name: /choose an offer worth selling/i }),
     ).toBeInTheDocument()
     expect(await screen.findByText(/Demo Solar Street Light Kits/i)).toBeInTheDocument()
 
@@ -185,7 +197,10 @@ describe('auth and role gates', () => {
     await user.type(screen.getByLabelText(/^password$/i), 'DemoPass123!')
     await user.type(screen.getByLabelText(/confirm password/i), 'DemoPass123!')
     await user.click(screen.getByRole('button', { name: /create account/i }))
-    expect(await screen.findByRole('heading', { name: /^Discover$/i })).toBeInTheDocument()
+    expect(await screen.findByLabelText(/ambassador navigation/i)).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: /choose an offer worth selling/i }),
+    ).toBeInTheDocument()
   })
 
   it('blocks business routes for ambassadors', async () => {

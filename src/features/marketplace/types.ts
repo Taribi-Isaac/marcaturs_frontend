@@ -1,3 +1,10 @@
+export type OfficialPaymentShare = {
+  token: string
+  path: string
+  share_path: string
+  share_url: string | null
+}
+
 export type MarketplaceCampaignCard = {
   id: number
   title: string
@@ -32,6 +39,17 @@ export type MarketplaceCampaignCard = {
   listing_expires_at: string | null
 }
 
+export type MarketplaceMarketingResource = {
+  id: number
+  type: string
+  title?: string | null
+  description?: string | null
+  mime_type?: string | null
+  size_bytes?: number | null
+  sort_order?: number | null
+  original_filename?: string | null
+}
+
 export type MarketplaceCampaignDetail = MarketplaceCampaignCard & {
   commission_trigger_description: string | null
   commission_payment_deadline_days: number | null
@@ -47,10 +65,14 @@ export type MarketplaceCampaignDetail = MarketplaceCampaignCard & {
   terms: string | null
   payment_destination_name: string | null
   payment_provider: string | null
-  marketing_resources: Array<{
-    id: number
-    title?: string | null
-    type?: string | null
-    original_filename?: string | null
-  }>
+  official_payment?: OfficialPaymentShare
+  marketing_resources: MarketplaceMarketingResource[]
+}
+
+export type CategorySummary = {
+  id: number
+  name: string
+  slug: string
+  listing_status: string
+  sort_order?: number
 }

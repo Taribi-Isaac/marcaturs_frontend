@@ -45,9 +45,12 @@ export function LoginPage() {
             try {
               const user = await login(values)
               const from = (location.state as { from?: string } | null)?.from
-              navigate(from && from.startsWith('/app') ? from : homePathForRole(user.role), {
-                replace: true,
-              })
+              const next = new URLSearchParams(location.search).get('next')
+              const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : null
+              navigate(
+                from && from.startsWith('/app') ? from : safeNext || homePathForRole(user.role),
+                { replace: true },
+              )
             } catch (error) {
               if (error instanceof ApiClientError) {
                 setFormError(error.message)
