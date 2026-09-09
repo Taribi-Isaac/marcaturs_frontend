@@ -357,18 +357,17 @@ export function DealDetailPage() {
               ) : null}
             </div>
 
-            {deal.has_open_dispute ? (
-              <div className="card stack">
-                <h3>Disputes</h3>
-                <p className="form-section__lead">
-                  This Deal has {deal.open_dispute_count} open dispute
-                  {deal.open_dispute_count === 1 ? '' : 's'}. Financial state is not changed here.
-                </p>
-                <ButtonLink to="/app/ambassador/disputes" variant="secondary">
-                  Open disputes area
-                </ButtonLink>
-              </div>
-            ) : null}
+            <div className="card stack">
+              <h3>Disputes</h3>
+              <p className="form-section__lead">
+                {deal.has_open_dispute
+                  ? `This Deal has ${deal.open_dispute_count} open dispute${deal.open_dispute_count === 1 ? '' : 's'}. Deal, dispute, and commission states remain separate.`
+                  : 'Open a separate review case if this Deal has a commercial issue. This does not rename the Deal status or reverse payment.'}
+              </p>
+              <ButtonLink to={`/app/ambassador/disputes?deal=${deal.id}`} variant="secondary">
+                {deal.has_open_dispute ? 'Open disputes area' : 'Open a dispute'}
+              </ButtonLink>
+            </div>
 
             {deal.status === 'payment_pending' ? (
               <div className="card stack">

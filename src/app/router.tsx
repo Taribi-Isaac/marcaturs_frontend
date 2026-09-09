@@ -34,6 +34,8 @@ import { EarningsPage } from '@/features/ambassador-deals/EarningsPage'
 import { OfficialPaymentPage } from '@/features/ambassador-deals/OfficialPaymentPage'
 import { BusinessDealListPage } from '@/features/business-deals/BusinessDealListPage'
 import { BusinessDealDetailPage } from '@/features/business-deals/BusinessDealDetailPage'
+import { ParticipantDisputeListPage } from '@/features/participant-disputes/ParticipantDisputeListPage'
+import { ParticipantDisputeDetailPage } from '@/features/participant-disputes/ParticipantDisputeDetailPage'
 
 export function AppRouter() {
   return useRoutes([
@@ -114,12 +116,11 @@ export function AppRouter() {
             },
             {
               path: 'disputes',
-              element: (
-                <PlaceholderDesk
-                  title="Disputes"
-                  description="Participant dispute desk placeholder."
-                />
-              ),
+              element: <ParticipantDisputeListPage role="BUSINESS" />,
+            },
+            {
+              path: 'disputes/:id',
+              element: <ParticipantDisputeDetailPage role="BUSINESS" />,
             },
             {
               path: 'verification',
@@ -172,12 +173,11 @@ export function AppRouter() {
             },
             {
               path: 'disputes',
-              element: (
-                <PlaceholderDesk
-                  title="Disputes"
-                  description="Open disputes linked from Deals. Full dispute workflows remain a later slice."
-                />
-              ),
+              element: <ParticipantDisputeListPage role="AMBASSADOR" />,
+            },
+            {
+              path: 'disputes/:id',
+              element: <ParticipantDisputeDetailPage role="AMBASSADOR" />,
             },
             {
               path: 'messages',

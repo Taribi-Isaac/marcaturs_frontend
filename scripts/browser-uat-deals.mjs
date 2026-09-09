@@ -103,7 +103,10 @@ try {
 
   await openPay.click()
   await page.waitForURL(/\/pay\//, { timeout: 15000 })
-  await page.getByText(/pay the business directly/i).first().waitFor({ timeout: 15000 })
+  await page
+    .getByText(/pay the business directly/i)
+    .first()
+    .waitFor({ timeout: 15000 })
   const body = await page.locator('body').innerText()
   if (/marcaturshub does not receive your payment/i.test(body)) {
     note('public pay boundary', 'ok')
@@ -116,7 +119,10 @@ try {
   const payUrl = page.url()
   await context.clearCookies()
   await page.goto(payUrl, { waitUntil: 'domcontentloaded', timeout: 45000 })
-  await page.getByText(/pay the business directly/i).first().waitFor({ timeout: 15000 })
+  await page
+    .getByText(/pay the business directly/i)
+    .first()
+    .waitFor({ timeout: 15000 })
   note('unauthenticated pay page', 'ok')
 
   await goto('/login')

@@ -615,7 +615,7 @@ describe('MH-FE-P04 business deal operations', () => {
     expect(await screen.findByText(/dispute open \(2\)/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /open disputes area/i })).toHaveAttribute(
       'href',
-      '/app/business/disputes',
+      '/app/business/disputes?deal=7001',
     )
 
     cleanup()

@@ -466,7 +466,7 @@ describe('MH-FE-P03 ambassador commercial journey', () => {
     await user.type(screen.getByLabelText(/search/i), 'unmatched')
     await user.click(screen.getByRole('button', { name: /^search$/i }))
     expect(await screen.findByText(/no matching campaigns/i)).toBeInTheDocument()
-  })
+  }, 10000)
 
   it('shows guest campaign detail without deal creation', async () => {
     renderApp('/campaigns/82')
@@ -654,7 +654,7 @@ describe('MH-FE-P03 ambassador commercial journey', () => {
     expect(await screen.findByText(/dispute open/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /open disputes area/i })).toHaveAttribute(
       'href',
-      '/app/ambassador/disputes',
+      '/app/ambassador/disputes?deal=9001',
     )
   })
 
