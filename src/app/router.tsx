@@ -39,6 +39,7 @@ import { ParticipantDisputeDetailPage } from '@/features/participant-disputes/Pa
 import { ParticipantNotificationsPage } from '@/features/participant-notifications/ParticipantNotificationsPage'
 import { ParticipantMessagesPage } from '@/features/participant-messages/ParticipantMessagesPage'
 import { ParticipantVerificationPage } from '@/features/participant-verification/ParticipantVerificationPage'
+import { ParticipantSettingsPage } from '@/features/participant-settings/ParticipantSettingsPage'
 
 export function AppRouter() {
   return useRoutes([
@@ -134,12 +135,7 @@ export function AppRouter() {
             },
             {
               path: 'settings',
-              element: (
-                <PlaceholderDesk
-                  title="Settings"
-                  description="Profile and password settings placeholder."
-                />
-              ),
+              element: <ParticipantSettingsPage role="BUSINESS" />,
             },
           ],
         },
@@ -198,12 +194,7 @@ export function AppRouter() {
             },
             {
               path: 'settings',
-              element: (
-                <PlaceholderDesk
-                  title="Settings"
-                  description="Profile and password settings placeholder."
-                />
-              ),
+              element: <ParticipantSettingsPage role="AMBASSADOR" />,
             },
           ],
         },
