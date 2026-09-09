@@ -38,6 +38,7 @@ import { ParticipantDisputeListPage } from '@/features/participant-disputes/Part
 import { ParticipantDisputeDetailPage } from '@/features/participant-disputes/ParticipantDisputeDetailPage'
 import { ParticipantNotificationsPage } from '@/features/participant-notifications/ParticipantNotificationsPage'
 import { ParticipantMessagesPage } from '@/features/participant-messages/ParticipantMessagesPage'
+import { ParticipantVerificationPage } from '@/features/participant-verification/ParticipantVerificationPage'
 
 export function AppRouter() {
   return useRoutes([
@@ -129,12 +130,7 @@ export function AppRouter() {
             },
             {
               path: 'verification',
-              element: (
-                <PlaceholderDesk
-                  title="Verification"
-                  description="Business verification submissions will be implemented next."
-                />
-              ),
+              element: <ParticipantVerificationPage role="BUSINESS" />,
             },
             {
               path: 'settings',
@@ -194,12 +190,7 @@ export function AppRouter() {
             },
             {
               path: 'verification',
-              element: (
-                <PlaceholderDesk
-                  title="Verification"
-                  description="Ambassador verification placeholder."
-                />
-              ),
+              element: <ParticipantVerificationPage role="AMBASSADOR" />,
             },
             {
               path: 'notifications',
