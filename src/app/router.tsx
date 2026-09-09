@@ -23,6 +23,9 @@ import {
   NotFoundPage,
   PlaceholderDesk,
 } from '@/features/app/PlaceholderPages'
+import { CampaignListPage } from '@/features/business-campaigns/CampaignListPage'
+import { CampaignCreatePage } from '@/features/business-campaigns/CampaignCreatePage'
+import { BusinessCampaignDetailPage } from '@/features/business-campaigns/BusinessCampaignDetailPage'
 
 export function AppRouter() {
   return useRoutes([
@@ -64,12 +67,15 @@ export function AppRouter() {
             },
             {
               path: 'campaigns',
-              element: (
-                <PlaceholderDesk
-                  title="Campaigns"
-                  description="Business campaign management arrives next. Route and shell are in place."
-                />
-              ),
+              element: <CampaignListPage />,
+            },
+            {
+              path: 'campaigns/new',
+              element: <CampaignCreatePage />,
+            },
+            {
+              path: 'campaigns/:id',
+              element: <BusinessCampaignDetailPage />,
             },
             {
               path: 'deals',
