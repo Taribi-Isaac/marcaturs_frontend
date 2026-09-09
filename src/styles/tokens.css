@@ -1,0 +1,58 @@
+:root {
+  /* Colour — restrained marketplace palette */
+  --color-primary: #0d6b5c;
+  --color-primary-hover: #0a5649;
+  --color-primary-soft: #e4f2ee;
+  --color-bg: #f6f7f5;
+  --color-surface: #ffffff;
+  --color-ink: #0e1a17;
+  --color-muted: #5c6b66;
+  --color-border: #d5dbd7;
+  --color-success: #1f7a4c;
+  --color-warning: #9a6b1a;
+  --color-danger: #a33b32;
+  --color-focus: #0d6b5c;
+
+  /* Typography */
+  --font-display: 'Syne Variable', Syne, system-ui, sans-serif;
+  --font-body: 'Figtree Variable', Figtree, system-ui, sans-serif;
+
+  --text-display: clamp(2.5rem, 5vw, 3.75rem);
+  --text-h1: clamp(2rem, 3.5vw, 2.75rem);
+  --text-h2: clamp(1.5rem, 2.5vw, 2rem);
+  --text-h3: 1.25rem;
+  --text-body: 1.0625rem;
+  --text-small: 0.875rem;
+  --text-label: 0.8125rem;
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-body: 1.6;
+
+  /* Layout */
+  --container: 1120px;
+  --container-narrow: 720px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4.5rem;
+  --space-9: 6rem;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-soft: 0 1px 2px rgb(14 26 23 / 4%), 0 8px 24px rgb(14 26 23 / 6%);
+  --header-h: 4rem;
+  --transition: 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition: 0ms;
+  }
+}
