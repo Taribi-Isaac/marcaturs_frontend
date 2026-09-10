@@ -41,9 +41,9 @@ export function HowItWorksPage() {
               body: 'Commission is settled directly Business → Ambassador within the published deadline.',
             },
           ].map((step) => (
-            <article key={step.title} className="card">
-              <h2 style={{ fontSize: '1.35rem', marginBottom: '0.5rem' }}>{step.title}</h2>
-              <p style={{ color: 'var(--color-muted)' }}>{step.body}</p>
+            <article key={step.title} className="card how-step">
+              <h2>{step.title}</h2>
+              <p>{step.body}</p>
             </article>
           ))}
           <div className="split-visual">

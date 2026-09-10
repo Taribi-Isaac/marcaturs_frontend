@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatDateTime, formatDealCommission } from '@/features/ambassador-deals/format'
 import { dealStatusBadgeClass, dealStatusLabel } from '@/features/ambassador-deals/status'
-import { ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
+import { EmptyState, ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
 import { fetchBusinessCommissions, fetchBusinessDeals, type CommissionListItem } from './api'
 import { businessCommissionKeys, businessDealKeys } from './queryKeys'
 import { businessDealAttention } from './status'
@@ -87,17 +87,14 @@ export function BusinessDealListPage() {
         ) : null}
 
         {list.isSuccess && ranked.length === 0 ? (
-          <div className="card stack">
-            <h2>No Deals yet</h2>
-            <p style={{ color: 'var(--color-muted)' }}>
+          <EmptyState title="No Deals yet">
+            <p>
               Deals appear here when Ambassadors choose one of your published campaigns to sell.
             </p>
-            <div>
-              <Link className="btn btn--secondary" to="/app/business/campaigns">
-                Open campaigns
-              </Link>
-            </div>
-          </div>
+            <Link className="btn btn--secondary" to="/app/business/campaigns">
+              Open campaigns
+            </Link>
+          </EmptyState>
         ) : null}
 
         {ranked.length > 0 ? (

@@ -7,6 +7,7 @@ const ambassadorLinks = [
   { to: '/app/ambassador/deals', label: 'Deals' },
   { to: '/app/ambassador/earnings', label: 'Earnings' },
   { to: '/app/ambassador/messages', label: 'Messages' },
+  { to: '/app/ambassador/disputes', label: 'Disputes' },
   { to: '/app/ambassador/verification', label: 'Verification' },
   { to: '/app/ambassador/notifications', label: 'Notifications' },
   { to: '/app/ambassador/settings', label: 'Settings' },
@@ -19,7 +20,7 @@ export function AmbassadorShell() {
   return (
     <div className="app-shell">
       <aside className="app-shell__nav" aria-label="Ambassador navigation">
-        <div className="brand" style={{ color: '#fff', marginBottom: '1.5rem' }}>
+        <div className="brand">
           <span className="brand__mark">M</span>
           Ambassador
         </div>
@@ -34,9 +35,7 @@ export function AmbassadorShell() {
       <div className="app-shell__main">
         <div className="app-shell__top">
           <div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-muted)', marginBottom: 4 }}>
-              Signed in as
-            </p>
+            <p className="app-shell__user-label">Signed in as</p>
             <strong>{user?.name}</strong>
           </div>
           <Button

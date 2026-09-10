@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { ButtonLink } from '@/shared/ui/Button'
-import { ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
+import { EmptyState, ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
 import { fetchDeals } from './api'
 import { formatDateTime, formatDealCommission } from './format'
 import { dealKeys } from './queryKeys'
@@ -43,16 +43,13 @@ export function DealListPage() {
         ) : null}
 
         {list.isSuccess && list.data.items.length === 0 ? (
-          <div className="card stack stack--lg" style={{ padding: 'var(--space-7)' }}>
-            <h2>No Deals yet</h2>
-            <p style={{ color: 'var(--color-muted)', maxWidth: '34rem' }}>
+          <EmptyState title="No Deals yet">
+            <p>
               Find a campaign worth promoting, create a Deal when a customer is ready, share the
               Official Payment link, and submit evidence after they pay the Business.
             </p>
-            <div>
-              <ButtonLink to="/discover">Choose an offer worth selling</ButtonLink>
-            </div>
-          </div>
+            <ButtonLink to="/discover">Choose an offer worth selling</ButtonLink>
+          </EmptyState>
         ) : null}
 
         {list.data && list.data.items.length > 0 ? (

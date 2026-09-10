@@ -115,7 +115,8 @@ export function ParticipantDisputeListPage({ role }: { role: UserRole }) {
 
           {list.isSuccess && list.data.items.length === 0 ? (
             <EmptyState title="No disputes yet">
-              Open a dispute from a Deal when a commercial issue needs review.
+              No open cases. Open a dispute from a Deal only when confirmation, payment, or
+              commission terms need formal review.
             </EmptyState>
           ) : null}
 

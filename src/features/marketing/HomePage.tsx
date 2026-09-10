@@ -17,7 +17,7 @@ export function HomePage() {
     <>
       <PageMeta
         title="Ambassador marketplace"
-        description="Businesses publish commission opportunities. Ambassadors promote them. Customers pay businesses directly."
+        description="Businesses publish opportunities. Ambassadors choose what fits. Real customer conversations become real Deals."
       />
       <section className="hero" aria-label="Marketplace introduction">
         <div className="hero__media" aria-hidden>
@@ -26,15 +26,14 @@ export function HomePage() {
         <div className="hero__scrim" />
         <div className="container hero__content reveal">
           <p className="hero__eyebrow">Distributed sales marketplace</p>
-          <h1>Businesses publish opportunities. Ambassadors earn by promoting them.</h1>
+          <h1>Businesses publish opportunities. Ambassadors choose what fits.</h1>
           <p className="hero__lead">
-            Discover commission-based campaigns, promote products you believe in, and record the
-            commercial moments that matter. Customers pay businesses directly — MarcatursHub does
-            not hold the money.
+            Real customer conversations become real Deals. Customers pay businesses directly —
+            MarcatursHub coordinates the commercial record, not the money.
           </p>
           <div className="row">
             <ButtonLink to="/discover" variant="on-dark">
-              Explore opportunities
+              Browse opportunities
             </ButtonLink>
             <ButtonLink to="/how-it-works" variant="on-dark-ghost">
               See how it works
@@ -65,20 +64,20 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="section section--tight" style={{ background: 'var(--color-surface)' }}>
+      <section className="section section--tight surface-band">
         <div className="container">
           <div className="split-visual">
             <div>
-              <SectionHeading eyebrow="How it works" title="From opportunity to commission.">
-                A simple commercial path designed for independent promotion — not employment.
+              <SectionHeading eyebrow="How it works" title="From opportunity to Deal.">
+                Track the moments that matter — not every conversation. The Deal, not the Lead.
               </SectionHeading>
-              <ol className="stack" style={{ paddingLeft: '1.1rem', color: 'var(--color-muted)' }}>
+              <ol className="split-list">
                 <li>Business publishes a commission-based campaign.</li>
                 <li>Ambassador discovers it and promotes through their own channels.</li>
                 <li>Customer pays the business directly.</li>
                 <li>Qualifying payment is confirmed and commission becomes due.</li>
               </ol>
-              <div className="row" style={{ marginTop: '1.5rem' }}>
+              <div className="row">
                 <ButtonLink to="/how-it-works">Full walkthrough</ButtonLink>
               </div>
             </div>
@@ -89,9 +88,9 @@ export function HomePage() {
 
       <section className="section">
         <div className="container">
-          <div className="row" style={{ justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-            <SectionHeading eyebrow="Marketplace" title="Opportunities live now.">
-              Browse real public campaigns. Sign in to participate.
+          <div className="marketplace-preview-header">
+            <SectionHeading eyebrow="Marketplace" title="Live opportunities.">
+              Browse public campaigns. Sign in as an Ambassador to create Deals.
             </SectionHeading>
             <ButtonLink to="/discover" variant="secondary">
               View all
@@ -120,29 +119,21 @@ export function HomePage() {
 
       <section className="section section--tight">
         <div className="container grid-2">
-          <article className="card">
-            <p className="badge" style={{ marginBottom: '1rem' }}>
-              For businesses
-            </p>
-            <h3 style={{ fontFamily: 'var(--font-display)', marginBottom: '0.75rem' }}>
-              Expand sales reach without building a full sales force.
-            </h3>
-            <p style={{ color: 'var(--color-muted)', marginBottom: '1.25rem' }}>
-              Publish campaign terms, share approved marketing resources, confirm qualifying
-              payments, and settle commissions directly with ambassadors.
+          <article className="card audience-card">
+            <p className="eyebrow">For businesses</p>
+            <h3>Publish opportunities. Confirm results. Pay ambassadors directly.</h3>
+            <p>
+              Set commission terms, share approved materials, confirm qualifying payments, and
+              settle commissions Business → Ambassador — without platform custody.
             </p>
             <Link to="/for-businesses">Why businesses join →</Link>
           </article>
-          <article className="card">
-            <p className="badge" style={{ marginBottom: '1rem' }}>
-              For ambassadors
-            </p>
-            <h3 style={{ fontFamily: 'var(--font-display)', marginBottom: '0.75rem' }}>
-              Promote products you understand. Earn commission on results.
-            </h3>
-            <p style={{ color: 'var(--color-muted)', marginBottom: '1.25rem' }}>
-              Discover campaigns, use approved materials, create Deals when customers are ready, and
-              track confirmation through to commission receipt.
+          <article className="card audience-card">
+            <p className="eyebrow">For ambassadors</p>
+            <h3>Choose what fits. Create Deals. Earn on confirmed results.</h3>
+            <p>
+              Discover campaigns, promote products you understand, create a Deal when a customer is
+              ready, and track confirmation through to commission receipt.
             </p>
             <Link to="/for-ambassadors">Why ambassadors join →</Link>
           </article>
@@ -155,8 +146,8 @@ export function HomePage() {
             <MediaFrame src={images.trust.src} alt={images.trust.alt} />
             <div>
               <SectionHeading eyebrow="Trust" title="Verification and clear commercial records.">
-                Marketplace trust comes from verification, published terms, payment evidence, and
-                accountable confirmation — not from holding funds.
+                Trust comes from verification, published terms, payment evidence, and accountable
+                confirmation — not from holding funds.
               </SectionHeading>
               <ButtonLink to="/register">Create your account</ButtonLink>
             </div>
@@ -167,11 +158,8 @@ export function HomePage() {
       <section className="section section--tight">
         <div className="container">
           <div className="cta-band">
-            <h2>Ready to explore the marketplace?</h2>
-            <p>
-              Start by browsing live opportunities, or create an account as a Business or
-              Ambassador.
-            </p>
+            <h2>Ready to explore?</h2>
+            <p>Browse live opportunities, or create an account as a Business or Ambassador.</p>
             <div className="row">
               <ButtonLink to="/discover" variant="on-dark">
                 Discover campaigns

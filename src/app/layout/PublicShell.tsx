@@ -87,13 +87,13 @@ export function PublicShell() {
       <footer className="site-footer">
         <div className="container site-footer__grid">
           <div>
-            <div className="brand" style={{ color: '#fff', marginBottom: '1rem' }}>
+            <div className="brand site-footer__brand">
               <span className="brand__mark">M</span>
               MarcatursHub
             </div>
-            <p style={{ maxWidth: '28rem', color: '#9eb0a8' }}>
-              A marketplace where businesses publish commission opportunities and independent
-              ambassadors promote them. Customers pay businesses directly.
+            <p className="site-footer__intro">
+              Businesses publish opportunities. Ambassadors choose what fits. Customers pay
+              businesses directly — MarcatursHub coordinates Deals, not custody.
             </p>
           </div>
           <div>

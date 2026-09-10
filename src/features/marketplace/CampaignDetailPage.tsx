@@ -75,16 +75,14 @@ export function CampaignDetailPage() {
           <div className="campaign-visual-hero__scrim" />
         </div>
         <div className="container campaign-visual-hero__content">
-          <p style={{ marginBottom: '0.75rem' }}>
-            <Link to="/discover" style={{ color: '#d7e7e0' }}>
-              ← Discover
-            </Link>
-          </p>
+          <Link to="/discover" className="campaign-visual-hero__back">
+            ← Discover
+          </Link>
           <div className="row" style={{ marginBottom: '1rem' }}>
             {campaign.category ? (
               <span className="badge badge--neutral">{campaign.category.name}</span>
             ) : null}
-            {campaign.is_featured ? <span className="badge">Featured</span> : null}
+            {campaign.is_featured ? <span className="badge badge--accent">Featured</span> : null}
             <span className="badge badge--neutral">{campaign.status}</span>
           </div>
           <h1>{campaign.title}</h1>

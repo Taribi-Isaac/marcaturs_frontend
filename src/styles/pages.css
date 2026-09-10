@@ -61,9 +61,17 @@
   margin-bottom: var(--space-6);
 }
 
+.section-heading .eyebrow {
+  margin-bottom: var(--space-2);
+}
+
 .section-heading p {
   margin-top: var(--space-3);
   color: var(--color-muted);
+}
+
+.section-heading h1 {
+  font-size: var(--text-h1);
 }
 
 .section-heading h2 {
@@ -109,7 +117,7 @@
 
 .campaign-card__title {
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: var(--text-h3);
   margin-bottom: var(--space-2);
 }
 
@@ -119,9 +127,27 @@
   margin-bottom: var(--space-4);
 }
 
+.campaign-card__commercial {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
 .campaign-card__commission {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--color-primary);
+  line-height: var(--leading-snug);
+  margin-bottom: var(--space-2);
+}
+
+.campaign-card__price {
+  color: var(--color-muted);
+  font-size: var(--text-small);
 }
 
 .page-hero {
@@ -226,10 +252,81 @@
 }
 
 .campaign-card__cta {
-  margin-top: var(--space-4);
   font-weight: 700;
   color: var(--color-primary);
   font-size: var(--text-small);
+}
+
+.audience-card .eyebrow {
+  margin-bottom: var(--space-4);
+}
+
+.audience-card h3 {
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  margin-bottom: var(--space-3);
+}
+
+.audience-card p {
+  color: var(--color-muted);
+  margin-bottom: var(--space-5);
+}
+
+.how-step h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  margin-bottom: var(--space-2);
+}
+
+.how-step p {
+  color: var(--color-muted);
+}
+
+.campaign-visual-hero__back {
+  display: inline-block;
+  margin-bottom: var(--space-3);
+  color: var(--color-on-dark);
+  text-decoration: none;
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.campaign-visual-hero__back:hover {
+  color: #fff;
+}
+
+.surface-band {
+  background: var(--color-surface);
+}
+
+.split-list {
+  padding-left: 1.1rem;
+  color: var(--color-muted);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.split-list + .row {
+  margin-top: var(--space-5);
+}
+
+.marketplace-preview-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.site-footer__brand {
+  color: #fff;
+  margin-bottom: var(--space-4);
+}
+
+.site-footer__intro {
+  max-width: 28rem;
+  color: var(--color-on-dark-muted);
 }
 
 .discover-filters {

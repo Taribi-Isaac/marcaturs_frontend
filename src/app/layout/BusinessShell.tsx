@@ -21,7 +21,7 @@ export function BusinessShell() {
   return (
     <div className="app-shell">
       <aside className="app-shell__nav" aria-label="Business navigation">
-        <div className="brand" style={{ color: '#fff', marginBottom: '1.5rem' }}>
+        <div className="brand">
           <span className="brand__mark">M</span>
           Business
         </div>
@@ -36,9 +36,7 @@ export function BusinessShell() {
       <div className="app-shell__main">
         <div className="app-shell__top">
           <div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-muted)', marginBottom: 4 }}>
-              Signed in as
-            </p>
+            <p className="app-shell__user-label">Signed in as</p>
             <strong>{user?.name}</strong>
           </div>
           <Button

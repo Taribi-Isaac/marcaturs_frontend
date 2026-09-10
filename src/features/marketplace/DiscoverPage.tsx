@@ -195,7 +195,12 @@ export function DiscoverPage({ variant = 'public' }: Props) {
             </ErrorState>
           ) : null}
           {list.data && list.data.items.length === 0 ? (
-            <EmptyState title="No matching campaigns">Try another search or filter.</EmptyState>
+            <EmptyState title="No matching campaigns">
+              <p>
+                No live opportunities match these filters. Try another search, category, or clear
+                Featured only.
+              </p>
+            </EmptyState>
           ) : null}
           {list.data && listItems.length > 0 ? (
             <div className="grid-3">

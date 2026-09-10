@@ -25,11 +25,7 @@ export function SectionHeading({
   const Heading = as
   return (
     <div className="section-heading">
-      {eyebrow ? (
-        <p className="hero__eyebrow" style={{ color: 'var(--color-primary)' }}>
-          {eyebrow}
-        </p>
-      ) : null}
+      {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
       <Heading>{title}</Heading>
       {children ? <p>{children}</p> : null}
     </div>
@@ -39,7 +35,7 @@ export function SectionHeading({
 export function LoadingState({ label = 'Loading…' }: { label?: string }) {
   return (
     <div className="state-panel" role="status">
-      <div className="skeleton" style={{ height: 18, width: 160, margin: '0 auto 12px' }} />
+      <div className="skeleton" aria-hidden />
       <p>{label}</p>
     </div>
   )
@@ -47,9 +43,9 @@ export function LoadingState({ label = 'Loading…' }: { label?: string }) {
 
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="state-panel">
+    <div className="state-panel state-panel--empty">
       <h2>{title}</h2>
-      {children ? <p>{children}</p> : null}
+      {children ? <div className="state-panel__body">{children}</div> : null}
     </div>
   )
 }
@@ -58,7 +54,7 @@ export function ErrorState({ title, children }: { title: string; children?: Reac
   return (
     <div className="state-panel" role="alert">
       <h2>{title}</h2>
-      {children ? <p>{children}</p> : null}
+      {children ? <div className="state-panel__body">{children}</div> : null}
     </div>
   )
 }

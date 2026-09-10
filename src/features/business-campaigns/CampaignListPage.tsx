@@ -67,23 +67,19 @@ export function CampaignListPage() {
         ) : null}
 
         {list.isSuccess && list.data.length === 0 ? (
-          <div className="card stack stack--lg" style={{ padding: 'var(--space-7)' }}>
-            <h2>Create your first campaign</h2>
-            <p style={{ color: 'var(--color-muted)', maxWidth: '36rem' }}>
-              A campaign is a marketplace listing identity. You attach a commercial version with
-              product, commission, and payment destination details, publish those terms, then submit
-              for review. Prepare a clear product offer, commission economics, and how customers
-              should pay you.
+          <EmptyState title="Create your first campaign">
+            <p>
+              A campaign is your marketplace listing. Attach a commercial version with product,
+              commission, and payment destination details, publish those terms, then submit for
+              review.
             </p>
-            <ul style={{ color: 'var(--color-muted)', paddingLeft: '1.1rem' }}>
+            <ul>
               <li>Product or service ambassadors will promote</li>
               <li>Commission rate or fixed amount and confirmation rules</li>
               <li>Official payment destination customers should use</li>
             </ul>
-            <div>
-              <ButtonLink to="/app/business/campaigns/new">Create campaign</ButtonLink>
-            </div>
-          </div>
+            <ButtonLink to="/app/business/campaigns/new">Create campaign</ButtonLink>
+          </EmptyState>
         ) : null}
 
         {list.isSuccess && list.data.length > 0 ? (
@@ -118,7 +114,11 @@ export function CampaignListPage() {
             </div>
 
             {filtered.length === 0 ? (
-              <EmptyState title="No matching campaigns">Try another search or status.</EmptyState>
+              <EmptyState title="No matching campaigns">
+                <p>
+                  No campaigns match this search or status. Clear filters to see your full list.
+                </p>
+              </EmptyState>
             ) : (
               <div className="campaign-list">
                 {filtered.map((campaign) => (

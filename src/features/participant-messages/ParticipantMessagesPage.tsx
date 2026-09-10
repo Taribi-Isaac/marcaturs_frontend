@@ -138,7 +138,8 @@ export function ParticipantMessagesPage({ role }: { role: ParticipantRole }) {
 
             {list.isSuccess && items.length === 0 ? (
               <EmptyState title="No conversations yet">
-                Open a conversation with a counterpart to start messaging.
+                Start from a Deal or counterpart relationship when you need to discuss terms,
+                evidence, or commission — MarcatursHub messages are Business ↔ Ambassador only.
               </EmptyState>
             ) : null}
 

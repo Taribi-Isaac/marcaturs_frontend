@@ -12,6 +12,9 @@
   --color-warning: #9a6b1a;
   --color-danger: #a33b32;
   --color-focus: #0d6b5c;
+  --color-surface-muted: #eef1ef;
+  --color-on-dark: #d7e0dc;
+  --color-on-dark-muted: #9eb0a8;
 
   /* Typography */
   --font-display: 'Syne Variable', Syne, system-ui, sans-serif;

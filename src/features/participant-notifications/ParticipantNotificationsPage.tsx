@@ -108,7 +108,8 @@ export function ParticipantNotificationsPage({ role }: { role: UserRole }) {
 
           {list.isSuccess && items.length === 0 ? (
             <EmptyState title="You're all caught up">
-              Important Deal, commission and account updates will appear here.
+              No notifications right now. Deal, commission, verification, and account updates will
+              appear here when something needs your attention.
             </EmptyState>
           ) : null}
 

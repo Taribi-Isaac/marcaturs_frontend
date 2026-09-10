@@ -6,25 +6,25 @@ export function CampaignCard({ campaign }: { campaign: MarketplaceCampaignCard }
   return (
     <Link to={`/campaigns/${campaign.id}`} className="card card--interactive card--link">
       <div className="campaign-card__meta">
+        {campaign.is_featured ? <span className="badge badge--accent">Featured</span> : null}
         {campaign.category ? (
           <span className="badge badge--neutral">{campaign.category.name}</span>
         ) : null}
-        {campaign.is_featured ? <span className="badge">Featured</span> : null}
         <span className="badge badge--neutral">{campaign.status}</span>
       </div>
+      <p className="campaign-card__commission">{formatCommission(campaign)}</p>
       <h3 className="campaign-card__title">{campaign.title}</h3>
       <p className="campaign-card__product">
         {campaign.product_name || 'Product opportunity'} · {businessDisplayName(campaign)}
       </p>
-      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'end' }}>
-        <span className="campaign-card__commission">{formatCommission(campaign)}</span>
-        <span style={{ color: 'var(--color-muted)', fontSize: '0.85rem' }}>
+      <div className="campaign-card__commercial">
+        <span className="campaign-card__price">
           {campaign.price_amount
             ? formatMoney(campaign.price_amount, campaign.price_currency)
-            : campaign.service_area || 'See details'}
+            : campaign.service_area || 'See offer details'}
         </span>
+        <span className="campaign-card__cta">View offer →</span>
       </div>
-      <p className="campaign-card__cta">View offer →</p>
     </Link>
   )
 }

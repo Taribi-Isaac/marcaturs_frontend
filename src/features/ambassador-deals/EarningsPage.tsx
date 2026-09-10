@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { ButtonLink } from '@/shared/ui/Button'
-import { ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
+import { EmptyState, ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
 import { fetchCommissions } from './api'
 import { formatDateTime, formatMoney } from './format'
 
@@ -46,15 +46,13 @@ export function EarningsPage() {
         ) : null}
 
         {list.isSuccess && list.data.items.length === 0 ? (
-          <div className="card stack">
-            <h2>No commission records yet</h2>
-            <p style={{ color: 'var(--color-muted)' }}>
-              Commission appears here after a Business confirms payment on one of your Deals.
+          <EmptyState title="No commission records yet">
+            <p>
+              Commission appears here after a Business confirms payment on one of your Deals. The
+              Business pays you directly — MarcatursHub does not auto-transfer funds.
             </p>
-            <div>
-              <ButtonLink to="/discover">Choose an offer worth selling</ButtonLink>
-            </div>
-          </div>
+            <ButtonLink to="/discover">Choose an offer worth selling</ButtonLink>
+          </EmptyState>
         ) : null}
 
         {list.data && list.data.items.length > 0 ? (
