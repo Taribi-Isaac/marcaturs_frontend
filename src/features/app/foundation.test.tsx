@@ -131,6 +131,35 @@ const server = setupServer(
       },
     }),
   ),
+  http.get('/api/v1/campaigns', () => HttpResponse.json({ success: true, data: [] })),
+  http.get('/api/v1/deals', () =>
+    HttpResponse.json({
+      success: true,
+      data: [],
+      meta: { pagination: { current_page: 1, last_page: 1, per_page: 50, total: 0 } },
+    }),
+  ),
+  http.get('/api/v1/commissions', () => HttpResponse.json({ success: true, data: [] })),
+  http.get('/api/v1/disputes', () =>
+    HttpResponse.json({
+      success: true,
+      data: [],
+      meta: { pagination: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
+    }),
+  ),
+  http.get('/api/v1/notifications', () =>
+    HttpResponse.json({
+      success: true,
+      data: [],
+      meta: { pagination: { current_page: 1, last_page: 1, per_page: 20, total: 0 } },
+    }),
+  ),
+  http.get('/api/v1/verification/status', () =>
+    HttpResponse.json({
+      success: true,
+      data: { overall_status: 'VERIFIED', requirements: [] },
+    }),
+  ),
 )
 
 beforeAll(() => server.listen())
@@ -185,7 +214,7 @@ describe('auth and role gates', () => {
     await user.type(await screen.findByLabelText(/^email$/i), 'biz@example.com')
     await user.type(screen.getByLabelText(/^password$/i), 'DemoPass123!')
     await user.click(screen.getByRole('button', { name: /^sign in$/i }))
-    expect(await screen.findByText(/Business dashboard/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /welcome back, biz/i })).toBeInTheDocument()
   })
 
   it('registers an ambassador into the ambassador shell', async () => {
@@ -218,7 +247,7 @@ describe('auth and role gates', () => {
     currentUser = businessUser
     const user = userEvent.setup()
     renderApp('/app/business')
-    expect(await screen.findByText(/Business dashboard/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /welcome back, biz/i })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /sign out/i }))
     expect(await screen.findByRole('heading', { name: /^sign in$/i })).toBeInTheDocument()
   })

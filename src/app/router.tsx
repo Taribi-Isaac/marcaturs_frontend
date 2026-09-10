@@ -17,12 +17,7 @@ import {
 } from '@/features/marketing/StaticPages'
 import { DiscoverPage } from '@/features/marketplace/DiscoverPage'
 import { CampaignDetailPage } from '@/features/marketplace/CampaignDetailPage'
-import {
-  AccountBlockedPage,
-  ForbiddenPage,
-  NotFoundPage,
-  PlaceholderDesk,
-} from '@/features/app/PlaceholderPages'
+import { AccountBlockedPage, ForbiddenPage, NotFoundPage } from '@/features/app/PlaceholderPages'
 import { CampaignListPage } from '@/features/business-campaigns/CampaignListPage'
 import { CampaignCreatePage } from '@/features/business-campaigns/CampaignCreatePage'
 import { BusinessCampaignDetailPage } from '@/features/business-campaigns/BusinessCampaignDetailPage'
@@ -36,6 +31,7 @@ import { BusinessDealListPage } from '@/features/business-deals/BusinessDealList
 import { BusinessDealDetailPage } from '@/features/business-deals/BusinessDealDetailPage'
 import { BusinessCommissionListPage } from '@/features/business-commissions/BusinessCommissionListPage'
 import { BusinessCommissionDetailPage } from '@/features/business-commissions/BusinessCommissionDetailPage'
+import { BusinessDashboardPage } from '@/features/business-dashboard/BusinessDashboardPage'
 import { ParticipantDisputeListPage } from '@/features/participant-disputes/ParticipantDisputeListPage'
 import { ParticipantDisputeDetailPage } from '@/features/participant-disputes/ParticipantDisputeDetailPage'
 import { ParticipantNotificationsPage } from '@/features/participant-notifications/ParticipantNotificationsPage'
@@ -75,12 +71,7 @@ export function AppRouter() {
           children: [
             {
               index: true,
-              element: (
-                <PlaceholderDesk
-                  title="Business dashboard"
-                  description="Your operational overview will compose campaign, Deal, and commission attention items in a later task. Navigation is ready."
-                />
-              ),
+              element: <BusinessDashboardPage />,
             },
             {
               path: 'campaigns',
