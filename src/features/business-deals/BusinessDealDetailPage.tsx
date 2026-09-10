@@ -395,11 +395,12 @@ export function BusinessDealDetailPage() {
             </div>
 
             <div className="card stack">
-              <h3>Campaign</h3>
+              <h3>Marketplace listing</h3>
               <strong>{deal.campaign.title}</strong>
               <p className="campaign-row__meta">
-                Status {deal.campaign.status} · Snapshot version v
-                {deal.campaign_version.version_number ?? '—'}
+                Current listing status: {deal.campaign.status}. Commercial terms on this Deal remain
+                a historical snapshot (version v{deal.campaign_version.version_number ?? '—'}), not
+                the live Campaign Version editor.
               </p>
               <ButtonLink
                 to={`/app/business/campaigns/${deal.campaign.id}`}

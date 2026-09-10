@@ -84,6 +84,7 @@ export function EarningsPage() {
                   {item.due_at ? `Due ${formatDateTime(item.due_at)}` : 'No due date'}
                   {item.paid_at ? ` · Paid ${formatDateTime(item.paid_at)}` : ''}
                   {item.received_at ? ` · Received ${formatDateTime(item.received_at)}` : ''}
+                  {item.status === 'paid' ? ' · Open the Deal to confirm you received payment' : ''}
                 </p>
               </Link>
             ))}

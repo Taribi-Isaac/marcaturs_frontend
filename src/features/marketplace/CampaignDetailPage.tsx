@@ -23,8 +23,9 @@ export function CampaignDetailPage() {
   const params = useParams()
   const id = Number(params.id)
   const { user, status } = useAuth()
-  const isAmbassador = status === 'authenticated' && user?.role === 'AMBASSADOR'
-  const isBusiness = status === 'authenticated' && user?.role === 'BUSINESS'
+  const isParticipantSession = status === 'authenticated' || status === 'restricted'
+  const isAmbassador = isParticipantSession && user?.role === 'AMBASSADOR'
+  const isBusiness = isParticipantSession && user?.role === 'BUSINESS'
   const isGuest = status === 'unauthenticated' || status === 'unknown'
 
   const query = useQuery({

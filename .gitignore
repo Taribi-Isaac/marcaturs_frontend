@@ -8,6 +8,8 @@ dist
 dist-ssr
 *.local
 .env
+.env.development
+.env.production
 .env.*.local
 
 # Editor
