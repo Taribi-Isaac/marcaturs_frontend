@@ -168,11 +168,12 @@ export function notificationDeepLink(
     return { to: `${base}/settings`, label: 'Open settings' }
   }
 
-  // Commission-only without deal_id: role-aware area, never invent IDs
+  // Commission-only without deal_id: Business commissions desk is not yet a full vertical —
+  // route to Deals where commission actions already live. Ambassadors use Earnings.
   const commissionId = asPositiveInt(data.commission_id)
   if (commissionId) {
     if (role === 'BUSINESS') {
-      return { to: `${base}/commissions`, label: 'Open commissions' }
+      return { to: `${base}/deals`, label: 'Open Deals' }
     }
     return { to: `${base}/earnings`, label: 'Open earnings' }
   }

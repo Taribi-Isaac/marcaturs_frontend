@@ -312,6 +312,16 @@ describe('MH-FE-P06 participant notifications UX', () => {
     expect(
       notificationDeepLink(
         makeNotification({
+          type: 'commission_overdue',
+          data: { commission_id: 38 },
+        }),
+        'BUSINESS',
+      ),
+    ).toEqual({ to: '/app/business/deals', label: 'Open Deals' })
+
+    expect(
+      notificationDeepLink(
+        makeNotification({
           type: 'test',
           data: { title: 'Hello' },
         }),
