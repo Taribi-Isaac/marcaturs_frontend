@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useAuth } from '@/features/auth/authContext'
 import { ApiClientError } from '@/shared/api/errors'
 import { Button } from '@/shared/ui/Button'
 import { ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
@@ -15,6 +16,7 @@ import {
   updateCampaign,
 } from './api'
 import { CampaignCommercialAddOns } from './CampaignCommercialAddOns'
+import { CampaignCoverPanel } from './CampaignCoverPanel'
 import { CampaignLifecycleActions } from './CampaignLifecycleActions'
 import { CampaignResourcesPanel } from './CampaignResourcesPanel'
 import { CampaignStatusPanel } from './CampaignStatusBadge'
@@ -34,6 +36,8 @@ export function BusinessCampaignDetailPage() {
   const params = useParams()
   const id = Number(params.id)
   const queryClient = useQueryClient()
+  const { status: authStatus } = useAuth()
+  const canMutateCover = authStatus === 'authenticated' || authStatus === 'restricted'
   const [tab, setTab] = useState<'overview' | 'version' | 'resources'>('overview')
   const [selectedVersion, setSelectedVersion] = useState<number | null>(null)
   const [shellError, setShellError] = useState<string | null>(null)
@@ -188,6 +192,12 @@ export function BusinessCampaignDetailPage() {
 
             {tab === 'overview' ? (
               <div className="stack stack--lg">
+                <CampaignCoverPanel
+                  campaignId={id}
+                  title={campaign.title}
+                  cover={campaign.cover_image}
+                  canMutate={canMutateCover}
+                />
                 <form
                   className="card stack"
                   onSubmit={shellForm.handleSubmit((values) => {

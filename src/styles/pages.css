@@ -115,6 +115,32 @@
   margin-bottom: var(--space-3);
 }
 
+.campaign-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: 0;
+  overflow: hidden;
+}
+
+.campaign-card__media {
+  min-height: 11.5rem;
+  background: var(--color-surface-muted, #e8eeeb);
+}
+
+.campaign-card__img {
+  width: 100%;
+  height: 100%;
+  min-height: 11.5rem;
+  object-fit: cover;
+  display: block;
+}
+
+.campaign-card__body {
+  padding: var(--space-4);
+  display: grid;
+  align-content: start;
+}
+
 .campaign-card__title {
   font-family: var(--font-display);
   font-size: var(--text-h3);
@@ -364,9 +390,10 @@
   overflow: hidden;
 }
 
-.discover-featured__visual img {
+.discover-featured__img {
   width: 100%;
   height: 100%;
+  min-height: 180px;
   object-fit: cover;
   display: block;
 }
@@ -385,9 +412,80 @@
   inset: 0;
 }
 
+.campaign-visual-hero__cover {
+  width: 100%;
+  height: 100%;
+}
+
 .campaign-visual-hero__img {
   width: 100%;
   height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.campaign-cover__fallback {
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  display: grid;
+  align-content: end;
+  gap: 0.35rem;
+  padding: var(--space-4);
+  background:
+    linear-gradient(160deg, rgb(26 74 67 / 92%) 0%, rgb(14 32 28 / 96%) 70%),
+    repeating-linear-gradient(-18deg, rgb(255 255 255 / 4%) 0 2px, transparent 2px 10px);
+  color: #eef6f3;
+}
+
+.campaign-cover__fallback--card {
+  min-height: 11.5rem;
+}
+
+.campaign-cover__fallback--hero {
+  min-height: min(52vh, 420px);
+}
+
+.campaign-cover__fallback--featured {
+  min-height: 180px;
+}
+
+.campaign-cover__fallback--thumb {
+  min-height: 4.5rem;
+  padding: var(--space-2);
+}
+
+.campaign-cover__fallback--panel {
+  min-height: 14rem;
+  border-radius: var(--radius-md);
+}
+
+.campaign-cover__fallback-kicker {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.campaign-cover__fallback-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 2.4vw, 1.45rem);
+  font-weight: 650;
+  line-height: 1.2;
+  max-width: 18ch;
+}
+
+.campaign-cover-panel__preview {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-muted, #e8eeeb);
+  min-height: 14rem;
+}
+
+.campaign-cover-panel__img {
+  width: 100%;
+  max-height: 22rem;
   object-fit: cover;
   display: block;
 }

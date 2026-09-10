@@ -165,6 +165,39 @@
   color: inherit;
 }
 
+.campaign-row__layout {
+  display: grid;
+  gap: var(--space-3);
+  align-items: stretch;
+}
+
+@media (min-width: 640px) {
+  .campaign-row__layout {
+    grid-template-columns: 7.5rem 1fr;
+  }
+}
+
+.campaign-row__thumb {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  min-height: 4.5rem;
+  background: var(--color-surface-muted, #e8eeeb);
+}
+
+.campaign-row__thumb-img {
+  width: 100%;
+  height: 100%;
+  min-height: 4.5rem;
+  object-fit: cover;
+  display: block;
+}
+
+.campaign-row__content {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
 .campaign-row__top {
   display: flex;
   flex-wrap: wrap;

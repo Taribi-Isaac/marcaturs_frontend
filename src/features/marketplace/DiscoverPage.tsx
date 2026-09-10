@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@/features/auth/authContext'
 import { fetchCategories, fetchMarketplaceCampaigns } from '@/features/marketplace/api'
 import { CampaignCard } from '@/features/marketplace/CampaignCard'
-import { images } from '@/shared/content/images'
+import { CampaignCoverVisual } from '@/features/marketplace/CampaignCoverVisual'
 import { Button, ButtonLink } from '@/shared/ui/Button'
 import { EmptyState, ErrorState, LoadingState, PageMeta, SectionHeading } from '@/shared/ui/States'
 
@@ -173,9 +173,15 @@ export function DiscoverPage({ variant = 'public' }: Props) {
                 <h2>Highlighted opportunities</h2>
                 <p>Businesses that invested in Featured placement — still the same Deal model.</p>
               </div>
-              <div className="discover-featured__visual" aria-hidden>
-                <img src={images.ambassadors.src} alt="" />
-              </div>
+              <CampaignCoverVisual
+                cover={featured.data.items[0]?.cover_image}
+                title={featured.data.items[0]?.title ?? 'Featured campaign'}
+                categoryName={featured.data.items[0]?.category?.name}
+                className="discover-featured__visual"
+                imgClassName="discover-featured__img"
+                fallbackClassName="campaign-cover__fallback campaign-cover__fallback--featured"
+                meaningful
+              />
             </div>
             <div className="grid-3" style={{ marginTop: '1.5rem' }}>
               {featured.data.items.map((campaign) => (

@@ -3,9 +3,9 @@ import { Link, useParams } from 'react-router-dom'
 import { AmbassadorResourceImage } from '@/features/ambassador-deals/AmbassadorResourceImage'
 import { campaignAllowsNewDeals } from '@/features/ambassador-deals/helpers'
 import { useAuth } from '@/features/auth/authContext'
+import { CampaignCoverVisual } from '@/features/marketplace/CampaignCoverVisual'
 import { fetchMarketplaceCampaign } from '@/features/marketplace/api'
 import { businessDisplayName, formatCommission, formatMoney } from '@/features/marketplace/format'
-import { images } from '@/shared/content/images'
 import { ButtonLink } from '@/shared/ui/Button'
 import { ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
 
@@ -50,6 +50,7 @@ export function CampaignDetailPage() {
   const campaign = query.data
   const business = businessDisplayName(campaign)
   const eligible = campaignAllowsNewDeals(campaign.status)
+  const coverAvailable = Boolean(campaign.cover_image?.available && campaign.cover_image.url)
   const imageResources = (campaign.marketing_resources || []).filter(
     (resource) => resource.type === 'image' || resource.mime_type?.startsWith('image/'),
   )
@@ -62,8 +63,18 @@ export function CampaignDetailPage() {
         description={`${campaign.product_name || campaign.title} — ${formatCommission(campaign)}`}
       />
       <section className="campaign-visual-hero">
-        <div className="campaign-visual-hero__media" aria-hidden={!leadImage}>
-          {isAmbassador && leadImage ? (
+        <div className="campaign-visual-hero__media">
+          {coverAvailable ? (
+            <CampaignCoverVisual
+              cover={campaign.cover_image}
+              title={campaign.title}
+              categoryName={campaign.category?.name}
+              className="campaign-visual-hero__cover"
+              imgClassName="campaign-visual-hero__img"
+              fallbackClassName="campaign-cover__fallback campaign-cover__fallback--hero"
+              meaningful
+            />
+          ) : isAmbassador && leadImage ? (
             <AmbassadorResourceImage
               campaignId={campaign.id}
               resourceId={leadImage.id}
@@ -71,7 +82,13 @@ export function CampaignDetailPage() {
               className="campaign-visual-hero__img"
             />
           ) : (
-            <img src={images.business.src} alt="" className="campaign-visual-hero__img" />
+            <CampaignCoverVisual
+              cover={null}
+              title={campaign.title}
+              categoryName={campaign.category?.name}
+              className="campaign-visual-hero__cover"
+              fallbackClassName="campaign-cover__fallback campaign-cover__fallback--hero"
+            />
           )}
           <div className="campaign-visual-hero__scrim" />
         </div>

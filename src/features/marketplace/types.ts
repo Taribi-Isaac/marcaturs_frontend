@@ -5,6 +5,8 @@ export type OfficialPaymentShare = {
   share_url: string | null
 }
 
+export type { CampaignCoverImage } from '@/features/marketplace/cover'
+
 export type MarketplaceCampaignCard = {
   id: number
   title: string
@@ -35,6 +37,7 @@ export type MarketplaceCampaignCard = {
   service_area: string | null
   version_number: number | null
   is_featured: boolean
+  cover_image?: import('@/features/marketplace/cover').CampaignCoverImage | null
   listing_starts_at: string | null
   listing_expires_at: string | null
 }

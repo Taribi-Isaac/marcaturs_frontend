@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { ButtonLink } from '@/shared/ui/Button'
 import { EmptyState, ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
+import { CampaignCoverVisual } from '@/features/marketplace/CampaignCoverVisual'
 import { fetchBusinessCampaigns } from './api'
 import { CampaignStatusBadge } from './CampaignStatusBadge'
 import { formatDateTime } from './format'
@@ -127,22 +128,34 @@ export function CampaignListPage() {
                     to={`/app/business/campaigns/${campaign.id}`}
                     className="card card--interactive campaign-row"
                   >
-                    <div className="campaign-row__top">
-                      <div>
-                        <h2>{campaign.title}</h2>
+                    <div className="campaign-row__layout">
+                      <CampaignCoverVisual
+                        cover={campaign.cover_image}
+                        title={campaign.title}
+                        categoryName={campaign.category?.name}
+                        className="campaign-row__thumb"
+                        imgClassName="campaign-row__thumb-img"
+                        fallbackClassName="campaign-cover__fallback campaign-cover__fallback--thumb"
+                      />
+                      <div className="campaign-row__content">
+                        <div className="campaign-row__top">
+                          <div>
+                            <h2>{campaign.title}</h2>
+                            <p className="campaign-row__meta">
+                              {campaign.category?.name ?? 'No category'}
+                              {campaign.current_version
+                                ? ` · Version ${campaign.current_version.version_number} (${campaign.current_version.status})`
+                                : ' · No published version yet'}
+                            </p>
+                          </div>
+                          <CampaignStatusBadge status={campaign.status} />
+                        </div>
                         <p className="campaign-row__meta">
-                          {campaign.category?.name ?? 'No category'}
-                          {campaign.current_version
-                            ? ` · Version ${campaign.current_version.version_number} (${campaign.current_version.status})`
-                            : ' · No published version yet'}
+                          Listing {formatDateTime(campaign.listing_starts_at)} →{' '}
+                          {formatDateTime(campaign.listing_expires_at)}
                         </p>
                       </div>
-                      <CampaignStatusBadge status={campaign.status} />
                     </div>
-                    <p className="campaign-row__meta">
-                      Listing {formatDateTime(campaign.listing_starts_at)} →{' '}
-                      {formatDateTime(campaign.listing_expires_at)}
-                    </p>
                   </Link>
                 ))}
               </div>

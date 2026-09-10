@@ -30,12 +30,15 @@ export type CurrentVersionSummary = {
   status: VersionStatus
 } | null
 
+export type { CampaignCoverImage } from '@/features/marketplace/cover'
+
 export type BusinessCampaign = {
   id: number
   title: string
   status: CampaignStatus
   category?: CategorySummary
   current_version?: CurrentVersionSummary
+  cover_image?: import('@/features/marketplace/cover').CampaignCoverImage | null
   listing_starts_at: string | null
   listing_expires_at: string | null
   submitted_at: string | null

@@ -151,6 +151,56 @@ export async function deleteMarketingResource(campaignId: number, resourceId: nu
   })
 }
 
+export async function fetchCampaignCover(campaignId: number, signal?: AbortSignal) {
+  return apiRequest<import('@/features/marketplace/cover').CampaignCoverImage>(
+    `/campaigns/${campaignId}/cover`,
+    { method: 'GET', signal },
+  )
+}
+
+export async function uploadCampaignCover(campaignId: number, file: File) {
+  await ensureCsrfCookie()
+  const body = new FormData()
+  body.append('file', file)
+
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+  }
+  const xsrf = readXsrfToken()
+  if (xsrf) headers['X-XSRF-TOKEN'] = xsrf
+
+  const response = await fetch(`${appConfig.apiBaseUrl}/campaigns/${campaignId}/cover`, {
+    method: 'POST',
+    headers,
+    body,
+    credentials: 'include',
+  })
+  const payload = (await response.json()) as {
+    success: boolean
+    data?: import('@/features/marketplace/cover').CampaignCoverImage
+    error?: { message: string; code: string; details?: unknown }
+  }
+  if (!response.ok || !payload.success || !payload.data) {
+    const { ApiClientError, mapHttpStatusToCode } = await import('@/shared/api/errors')
+    throw new ApiClientError({
+      code: (payload.error?.code as never) || mapHttpStatusToCode(response.status),
+      message: payload.error?.message || 'Cover upload failed.',
+      status: response.status,
+      details: payload.error?.details,
+    })
+  }
+  return payload.data
+}
+
+export async function deleteCampaignCover(campaignId: number) {
+  return apiRequest<null>(`/campaigns/${campaignId}/cover`, { method: 'DELETE' })
+}
+
+export function campaignCoverDownloadUrl(campaignId: number) {
+  return `${appConfig.apiBaseUrl}/campaigns/${campaignId}/cover/download`
+}
+
 export function marketingResourceDownloadUrl(campaignId: number, resourceId: number) {
   return `${appConfig.apiBaseUrl}/campaigns/${campaignId}/resources/${resourceId}/download`
 }

@@ -48,6 +48,10 @@ const campaign = {
   service_area: 'Lagos',
   version_number: 1,
   is_featured: false,
+  cover_image: {
+    available: true,
+    url: 'http://localhost/api/v1/marketplace/campaigns/82/cover',
+  },
   listing_starts_at: null,
   listing_expires_at: null,
 }
@@ -131,6 +135,14 @@ const server = setupServer(
       },
     }),
   ),
+  http.get(
+    '/api/v1/marketplace/campaigns/:id/cover',
+    () =>
+      new HttpResponse(new Uint8Array([1, 2, 3]), {
+        status: 200,
+        headers: { 'Content-Type': 'image/jpeg' },
+      }),
+  ),
   http.get('/api/v1/campaigns', () => HttpResponse.json({ success: true, data: [] })),
   http.get('/api/v1/deals', () =>
     HttpResponse.json({
@@ -197,6 +209,12 @@ describe('public experience', () => {
       await screen.findByRole('heading', { name: /choose an offer worth selling/i }),
     ).toBeInTheDocument()
     expect(await screen.findByText(/Demo Solar Street Light Kits/i)).toBeInTheDocument()
+    const discoverCovers = screen.getAllByRole('img', {
+      name: /Cover image for Demo Solar Street Light Kits/i,
+    })
+    expect(discoverCovers.length).toBeGreaterThan(0)
+    expect(discoverCovers[0]).toHaveAttribute('src', '/api/v1/marketplace/campaigns/82/cover')
+    expect(screen.queryByText(/storage\/|campaign-media|disk/i)).not.toBeInTheDocument()
 
     cleanup()
     renderApp('/campaigns/82')
@@ -204,6 +222,10 @@ describe('public experience', () => {
       await screen.findByRole('heading', { name: /Demo Solar Street Light Kits/i }),
     ).toBeInTheDocument()
     expect(screen.getAllByText(/12% commission/i).length).toBeGreaterThan(0)
+    expect(
+      screen.getByRole('img', { name: /Cover image for Demo Solar Street Light Kits/i }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/storage\/|campaign-media|disk/i)).not.toBeInTheDocument()
   })
 })
 

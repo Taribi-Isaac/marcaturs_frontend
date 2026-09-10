@@ -321,6 +321,40 @@ const server = setupServer(
     return HttpResponse.json({ success: true, data: campaign })
   }),
   http.get('/api/v1/campaigns/:id/resources', () => HttpResponse.json({ success: true, data: [] })),
+  http.post('/api/v1/campaigns/:id/cover', async ({ params }) => {
+    const id = Number(params.id)
+    const campaign = campaigns.find((c) => c.id === id)
+    if (!campaign) {
+      return HttpResponse.json(
+        { success: false, error: { code: 'not_found', message: 'Not found' } },
+        { status: 404 },
+      )
+    }
+    const existed = Boolean(campaign.cover_image?.available)
+    campaign.cover_image = {
+      available: true,
+      url: `http://localhost/api/v1/campaigns/${id}/cover/download`,
+      mime_type: 'image/jpeg',
+      size_bytes: 1024,
+      original_filename: 'cover.jpg',
+    }
+    return HttpResponse.json(
+      { success: true, data: campaign.cover_image },
+      { status: existed ? 200 : 201 },
+    )
+  }),
+  http.delete('/api/v1/campaigns/:id/cover', ({ params }) => {
+    const id = Number(params.id)
+    const campaign = campaigns.find((c) => c.id === id)
+    if (!campaign?.cover_image?.available) {
+      return HttpResponse.json(
+        { success: false, error: { code: 'not_found', message: 'Not found' } },
+        { status: 404 },
+      )
+    }
+    campaign.cover_image = { available: false, url: null }
+    return HttpResponse.json({ success: true, data: null })
+  }),
   http.get('/api/v1/campaigns/:id/featured', () =>
     HttpResponse.json({
       success: true,
@@ -443,6 +477,18 @@ describe('Business campaigns desk', () => {
 
     renderApp('/app/business/campaigns/55')
     expect(await screen.findByRole('heading', { name: 'Submit Me' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Campaign Cover' })).toBeInTheDocument()
+    expect(screen.getByText(/No cover yet/i)).toBeInTheDocument()
+
+    const file = new File(['cover-bytes'], 'cover.jpg', { type: 'image/jpeg' })
+    const fileInput = document.querySelector(
+      '.campaign-cover-panel input[type="file"]',
+    ) as HTMLInputElement
+    expect(fileInput).toBeTruthy()
+    await user.upload(fileInput, file)
+    expect(await screen.findByText(/Cover uploaded/i)).toBeInTheDocument()
+    expect(campaigns[0]?.cover_image?.available).toBe(true)
+
     expect(screen.getByText(/still being prepared/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('tab', { name: /Commercial version/i }))
@@ -456,6 +502,7 @@ describe('Business campaigns desk', () => {
     expect(await screen.findByText(/Commercial version published/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('tab', { name: /Overview/i }))
+    expect(screen.getByRole('heading', { name: 'Campaign Cover' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /Submit for review/i }))
     await waitFor(() => {
       expect(campaigns[0]?.status).toBe('submitted')
@@ -485,6 +532,99 @@ describe('Business campaigns desk', () => {
   it('handles not-found campaign detail', async () => {
     renderApp('/app/business/campaigns/999')
     expect(await screen.findByText(/Campaign not found/i)).toBeInTheDocument()
+  })
+
+  it('replaces and removes campaign cover with confirmations', async () => {
+    const user = userEvent.setup()
+    window.confirm = () => true
+    campaigns = [
+      draftCampaign({
+        id: 88,
+        title: 'Covered Offer',
+        cover_image: {
+          available: true,
+          url: 'http://localhost/api/v1/campaigns/88/cover/download',
+          mime_type: 'image/jpeg',
+          size_bytes: 2048,
+          original_filename: 'old.jpg',
+        },
+      }),
+    ]
+
+    renderApp('/app/business/campaigns/88')
+    expect(await screen.findByRole('heading', { name: 'Campaign Cover' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: /Cover preview for Covered Offer/i }),
+    ).toBeInTheDocument()
+
+    const file = new File(['new-cover'], 'new.png', { type: 'image/png' })
+    const fileInput = document.querySelector(
+      '.campaign-cover-panel input[type="file"]',
+    ) as HTMLInputElement
+    await user.upload(fileInput, file)
+    expect(await screen.findByText(/Cover replaced/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Remove cover/i }))
+    expect(await screen.findByText(/Cover removed/i)).toBeInTheDocument()
+    expect(await screen.findByText(/No cover yet/i)).toBeInTheDocument()
+    expect(campaigns[0]?.cover_image?.available).toBe(false)
+  })
+
+  it('surfaces cover validation errors from the API', async () => {
+    const user = userEvent.setup()
+    window.confirm = () => true
+    campaigns = [draftCampaign({ id: 89, title: 'Strict Cover' })]
+
+    server.use(
+      http.post('/api/v1/campaigns/:id/cover', () =>
+        HttpResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'validation_error',
+              message: 'The cover image must be a file of type: jpeg, png, webp.',
+            },
+          },
+          { status: 422 },
+        ),
+      ),
+    )
+
+    renderApp('/app/business/campaigns/89')
+    await screen.findByRole('heading', { name: 'Campaign Cover' })
+    const fileInput = document.querySelector(
+      '.campaign-cover-panel input[type="file"]',
+    ) as HTMLInputElement
+    await user.upload(fileInput, new File(['img'], 'cover.jpg', { type: 'image/jpeg' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /jpeg, png, webp|rejected|JPEG, PNG, or WebP/i,
+    )
+  })
+
+  it('surfaces forbidden cover mutation errors', async () => {
+    const user = userEvent.setup()
+    window.confirm = () => true
+    campaigns = [draftCampaign({ id: 90, title: 'Forbidden Cover' })]
+
+    server.use(
+      http.post('/api/v1/campaigns/:id/cover', () =>
+        HttpResponse.json(
+          {
+            success: false,
+            error: { code: 'forbidden', message: 'Forbidden' },
+          },
+          { status: 403 },
+        ),
+      ),
+    )
+
+    renderApp('/app/business/campaigns/90')
+    await screen.findByRole('heading', { name: 'Campaign Cover' })
+    const fileInput = document.querySelector(
+      '.campaign-cover-panel input[type="file"]',
+    ) as HTMLInputElement
+    await user.upload(fileInput, new File(['img'], 'cover.jpg', { type: 'image/jpeg' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(/do not have permission/i)
   })
 
   it('blocks unauthenticated access to the campaigns desk', async () => {
