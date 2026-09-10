@@ -154,6 +154,11 @@ export function notificationDeepLink(
     return { to: `${base}/disputes/${disputeId}`, label: 'Open dispute' }
   }
 
+  const commissionId = asPositiveInt(data.commission_id)
+  if (commissionId && role === 'BUSINESS') {
+    return { to: `${base}/commissions/${commissionId}`, label: 'Open commission' }
+  }
+
   const dealId = asPositiveInt(data.deal_id)
   if (dealId) {
     return { to: `${base}/deals/${dealId}`, label: 'Open Deal' }
@@ -168,13 +173,7 @@ export function notificationDeepLink(
     return { to: `${base}/settings`, label: 'Open settings' }
   }
 
-  // Commission-only without deal_id: Business commissions desk is not yet a full vertical —
-  // route to Deals where commission actions already live. Ambassadors use Earnings.
-  const commissionId = asPositiveInt(data.commission_id)
-  if (commissionId) {
-    if (role === 'BUSINESS') {
-      return { to: `${base}/deals`, label: 'Open Deals' }
-    }
+  if (commissionId && role === 'AMBASSADOR') {
     return { to: `${base}/earnings`, label: 'Open earnings' }
   }
 

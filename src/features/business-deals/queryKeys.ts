@@ -6,5 +6,7 @@ export const businessDealKeys = {
 }
 
 export const businessCommissionKeys = {
-  list: () => ['business-commissions', 'list'] as const,
+  all: ['business-commissions'] as const,
+  list: () => [...businessCommissionKeys.all, 'list'] as const,
+  detail: (id: number) => [...businessCommissionKeys.all, 'detail', id] as const,
 }

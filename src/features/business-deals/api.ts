@@ -14,6 +14,13 @@ export type CommissionListItem = {
   is_overdue: boolean
   payment_reference?: string | null
   payment_note?: string | null
+  became_due_at?: string | null
+  campaign_version_id?: number | null
+  commission_type?: 'percentage' | 'fixed' | string | null
+  commission_rate?: string | number | null
+  business?: { id: number; role: string } | null
+  ambassador?: { id: number; role: string } | null
+  created_at?: string | null
 }
 
 export async function fetchBusinessDeals(page = 1, perPage = 50, signal?: AbortSignal) {
@@ -78,8 +85,12 @@ export async function cancelBusinessDeal(dealId: number, reason: string) {
   })
 }
 
-export async function fetchBusinessCommissions(signal?: AbortSignal) {
-  const result = await apiRequestResult<CommissionListItem[]>('/commissions', {
+export async function fetchBusinessCommissions(signal?: AbortSignal, page = 1, perPage = 100) {
+  const qs = new URLSearchParams({
+    page: String(page),
+    per_page: String(perPage),
+  })
+  const result = await apiRequestResult<CommissionListItem[]>(`/commissions?${qs}`, {
     method: 'GET',
     signal,
   })
@@ -87,6 +98,13 @@ export async function fetchBusinessCommissions(signal?: AbortSignal) {
     items: result.data,
     pagination: result.meta?.pagination,
   }
+}
+
+export async function fetchBusinessCommission(commissionId: number, signal?: AbortSignal) {
+  return apiRequest<CommissionListItem>(`/commissions/${commissionId}`, {
+    method: 'GET',
+    signal,
+  })
 }
 
 export async function markCommissionPaid(

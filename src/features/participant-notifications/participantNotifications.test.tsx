@@ -205,7 +205,7 @@ describe('MH-FE-P06 participant notifications UX', () => {
     expect(screen.queryByText('0123456789')).not.toBeInTheDocument()
   })
 
-  it('marks a notification as read and links to business deal/dispute routes', async () => {
+  it('marks a notification as read and links to business commission/dispute routes', async () => {
     me = business
     const user = userEvent.setup()
     renderApp('/app/business/notifications')
@@ -213,9 +213,9 @@ describe('MH-FE-P06 participant notifications UX', () => {
     await waitFor(() => {
       expect(notifications.find((n) => n.id === 'n-1')?.is_read).toBe(true)
     })
-    expect(await screen.findByRole('link', { name: /^open deal$/i })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /^open commission$/i })).toHaveAttribute(
       'href',
-      '/app/business/deals/7001',
+      '/app/business/commissions/91',
     )
 
     cleanup()
@@ -317,7 +317,7 @@ describe('MH-FE-P06 participant notifications UX', () => {
         }),
         'BUSINESS',
       ),
-    ).toEqual({ to: '/app/business/deals', label: 'Open Deals' })
+    ).toEqual({ to: '/app/business/commissions/38', label: 'Open commission' })
 
     expect(
       notificationDeepLink(

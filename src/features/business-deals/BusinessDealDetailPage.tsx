@@ -87,7 +87,7 @@ export function BusinessDealDetailPage() {
       queryClient.invalidateQueries({ queryKey: businessDealKeys.detail(id) }),
       queryClient.invalidateQueries({ queryKey: businessDealKeys.evidence(id) }),
       queryClient.invalidateQueries({ queryKey: businessDealKeys.all }),
-      queryClient.invalidateQueries({ queryKey: businessCommissionKeys.list() }),
+      queryClient.invalidateQueries({ queryKey: businessCommissionKeys.all }),
     ])
   }
 

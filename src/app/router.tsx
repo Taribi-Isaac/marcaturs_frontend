@@ -34,6 +34,8 @@ import { EarningsPage } from '@/features/ambassador-deals/EarningsPage'
 import { OfficialPaymentPage } from '@/features/ambassador-deals/OfficialPaymentPage'
 import { BusinessDealListPage } from '@/features/business-deals/BusinessDealListPage'
 import { BusinessDealDetailPage } from '@/features/business-deals/BusinessDealDetailPage'
+import { BusinessCommissionListPage } from '@/features/business-commissions/BusinessCommissionListPage'
+import { BusinessCommissionDetailPage } from '@/features/business-commissions/BusinessCommissionDetailPage'
 import { ParticipantDisputeListPage } from '@/features/participant-disputes/ParticipantDisputeListPage'
 import { ParticipantDisputeDetailPage } from '@/features/participant-disputes/ParticipantDisputeDetailPage'
 import { ParticipantNotificationsPage } from '@/features/participant-notifications/ParticipantNotificationsPage'
@@ -110,12 +112,11 @@ export function AppRouter() {
             },
             {
               path: 'commissions',
-              element: (
-                <PlaceholderDesk
-                  title="Commissions"
-                  description="Commission due/paid tracking for businesses will follow."
-                />
-              ),
+              element: <BusinessCommissionListPage />,
+            },
+            {
+              path: 'commissions/:id',
+              element: <BusinessCommissionDetailPage />,
             },
             {
               path: 'disputes',
