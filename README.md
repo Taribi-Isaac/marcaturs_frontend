@@ -28,3 +28,7 @@ It is **not**:
 ### Fallback
 
 When `available` is false or `url` is null, UI shows an intentional branded fallback (category + title). No remote stock photos and no broken-image placeholders.
+
+## Staging builds (ENG-040A)
+
+Use `.env.staging.example` as a template for staging Vite builds (`vite build --mode staging`). Point `VITE_BACKEND_ORIGIN` / API / Reverb at the staging API and WSS hosts. Do not commit filled staging env files. See `backend/docs/deployment/staging.md`.
