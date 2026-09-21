@@ -643,7 +643,7 @@ describe('Business campaigns desk', () => {
     }
     renderApp('/app/business/campaigns')
     expect(
-      await screen.findByText(/Admin accounts|not available|Forbidden|do not have/i),
+      await screen.findByRole('heading', { name: /marketplace participants/i }),
     ).toBeInTheDocument()
   })
 })

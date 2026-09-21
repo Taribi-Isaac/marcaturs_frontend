@@ -1,13 +1,37 @@
-import type { ReactNode } from 'react'
+import { useLayoutEffect, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
+import { applyDocumentHead } from '@/shared/seo/documentHead'
+import { classifyRoute } from '@/shared/seo/routePolicy'
 
-export function PageMeta({ title, description }: { title: string; description?: string }) {
-  if (typeof document !== 'undefined') {
-    document.title = `${title} · MarcatursHub`
-    const meta = document.querySelector('meta[name="description"]')
-    if (meta && description) {
-      meta.setAttribute('content', description)
-    }
-  }
+export function PageMeta({
+  title,
+  description,
+  indexable,
+  imageUrl,
+}: {
+  title: string
+  description?: string
+  /** Override route policy. Prefer omitting — policy derives from path. */
+  indexable?: boolean
+  /** Optional social preview image (absolute or same-origin path). */
+  imageUrl?: string | null
+}) {
+  const location = useLocation()
+
+  useLayoutEffect(() => {
+    const policy = classifyRoute(location.pathname)
+    // Never allow indexing on private/auth paths even if a page passes indexable.
+    const allowIndex = policy.indexable && indexable !== false
+    applyDocumentHead({
+      title,
+      description,
+      indexable: allowIndex,
+      imageUrl: allowIndex ? imageUrl : null,
+      pathname: location.pathname,
+      search: location.search,
+    })
+  }, [title, description, indexable, imageUrl, location.pathname, location.search])
+
   return null
 }
 

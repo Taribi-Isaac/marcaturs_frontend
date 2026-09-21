@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { GuestOnly } from '@/features/auth/RequireAuth'
 import { useAuth } from '@/features/auth/authContext'
 import { homePathForRole } from '@/features/auth/authHelpers'
@@ -21,7 +21,9 @@ export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const [formError, setFormError] = useState<string | null>(null)
+  const emailVerifiedNotice = searchParams.get('email_verified') === '1'
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { email: '', password: '' },
@@ -33,6 +35,11 @@ export function LoginPage() {
       <div className="auth-panel">
         <h1>Sign in</h1>
         <p className="auth-panel__lead">Access your Business or Ambassador workspace.</p>
+        {emailVerifiedNotice ? (
+          <div className="alert alert--info" role="status" style={{ marginBottom: '1rem' }}>
+            Your email is verified. Sign in to continue.
+          </div>
+        ) : null}
         {formError ? (
           <div className="alert alert--danger" role="alert" style={{ marginBottom: '1rem' }}>
             {formError}
@@ -89,6 +96,9 @@ export function LoginPage() {
           </Button>
         </form>
         <p style={{ marginTop: '1.25rem', fontSize: '0.9rem' }}>
+          <Link to="/forgot-password">Forgot password?</Link>
+        </p>
+        <p style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
           New here? <Link to="/register">Create an account</Link>
         </p>
       </div>

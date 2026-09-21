@@ -24,10 +24,12 @@ export function CampaignCard({ campaign }: { campaign: MarketplaceCampaignCard }
           {campaign.category ? (
             <span className="badge badge--neutral">{campaign.category.name}</span>
           ) : null}
-          <span className="badge badge--neutral">{campaign.status}</span>
+          {campaign.service_area ? (
+            <span className="badge badge--neutral">{campaign.service_area}</span>
+          ) : null}
         </div>
-        <p className="campaign-card__commission">{formatCommission(campaign)}</p>
         <h3 className="campaign-card__title">{campaign.title}</h3>
+        <p className="campaign-card__commission">{formatCommission(campaign)}</p>
         <p className="campaign-card__product">
           {campaign.product_name || 'Product opportunity'} · {businessDisplayName(campaign)}
         </p>
@@ -35,7 +37,7 @@ export function CampaignCard({ campaign }: { campaign: MarketplaceCampaignCard }
           <span className="campaign-card__price">
             {campaign.price_amount
               ? formatMoney(campaign.price_amount, campaign.price_currency)
-              : campaign.service_area || 'See offer details'}
+              : 'See offer details'}
           </span>
           <span className="campaign-card__cta">View offer →</span>
         </div>

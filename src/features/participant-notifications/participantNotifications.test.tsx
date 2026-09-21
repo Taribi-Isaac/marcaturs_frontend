@@ -322,6 +322,28 @@ describe('MH-FE-P06 participant notifications UX', () => {
     expect(
       notificationDeepLink(
         makeNotification({
+          type: 'certification_assessment_result',
+          data: { enrollment_id: 41, passed: false, score_percent: '25.00' },
+        }),
+        'AMBASSADOR',
+      ),
+    ).toEqual({
+      to: '/app/ambassador/certification/enrollments/41/assessment',
+      label: 'Open assessment result',
+    })
+
+    expect(
+      notificationTitle(
+        makeNotification({
+          type: 'certification_assessment_result',
+          data: { passed: true, result: 'passed' },
+        }),
+      ),
+    ).toBe('Assessment passed')
+
+    expect(
+      notificationDeepLink(
+        makeNotification({
           type: 'test',
           data: { title: 'Hello' },
         }),

@@ -36,3 +36,46 @@ export async function logoutRequest(): Promise<null> {
     notifyOnUnauthorized: false,
   })
 }
+
+export async function resendEmailVerificationRequest(): Promise<{
+  message: string
+  already_verified: boolean
+}> {
+  return apiRequest<{ message: string; already_verified: boolean }>(
+    '/auth/email/verification-notification',
+    {
+      method: 'POST',
+    },
+  )
+}
+
+export type ForgotPasswordPayload = {
+  email: string
+}
+
+export type ResetPasswordPayload = {
+  email: string
+  token: string
+  password: string
+  password_confirmation: string
+}
+
+export async function forgotPasswordRequest(
+  payload: ForgotPasswordPayload,
+): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>('/auth/forgot-password', {
+    method: 'POST',
+    body: payload,
+    notifyOnUnauthorized: false,
+  })
+}
+
+export async function resetPasswordRequest(
+  payload: ResetPasswordPayload,
+): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>('/auth/reset-password', {
+    method: 'POST',
+    body: payload,
+    notifyOnUnauthorized: false,
+  })
+}

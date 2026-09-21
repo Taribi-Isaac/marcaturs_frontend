@@ -1,0 +1,79 @@
+name: Staging build
+
+# ENG-040 — build Participant SPA for staging. Upload to S3 requires AWS (gated).
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Sync dist to staging S3 (requires AWS)"
+        type: boolean
+        default: false
+  push:
+    branches: [main, master]
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - name: Build staging bundle
+        run: npm run build -- --mode staging
+        env:
+          # Public placeholders only — override via GitHub Environment vars when deploying.
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://api.staging.example.com/api/v1' }}
+          VITE_BACKEND_ORIGIN: ${{ vars.VITE_BACKEND_ORIGIN || 'https://api.staging.example.com' }}
+          VITE_PUBLIC_ORIGIN: ${{ vars.VITE_PUBLIC_ORIGIN || 'https://app.staging.example.com' }}
+          VITE_REVERB_APP_KEY: ${{ vars.VITE_REVERB_APP_KEY || '' }}
+          VITE_REVERB_HOST: ${{ vars.VITE_REVERB_HOST || 'ws.staging.example.com' }}
+          VITE_REVERB_PORT: ${{ vars.VITE_REVERB_PORT || '443' }}
+          VITE_REVERB_SCHEME: ${{ vars.VITE_REVERB_SCHEME || 'https' }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: participant-dist
+          path: dist
+          retention-days: 7
+
+  deploy-staging:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy == true
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Require AWS config
+        env:
+          ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+          BUCKET: ${{ vars.STAGING_FRONTEND_BUCKET }}
+        run: |
+          if [ -z "$ROLE_ARN" ] || [ -z "$BUCKET" ]; then
+            echo "::error::Set secrets.AWS_ROLE_ARN and vars.STAGING_FRONTEND_BUCKET"
+            exit 1
+          fi
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'eu-west-1' }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: participant-dist
+          path: dist
+      - run: aws s3 sync dist "s3://${{ vars.STAGING_FRONTEND_BUCKET }}/" --delete
+      - name: Invalidate CloudFront (optional)
+        if: ${{ vars.STAGING_FRONTEND_DISTRIBUTION_ID != '' }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.STAGING_FRONTEND_DISTRIBUTION_ID }}" \
+            --paths "/*"

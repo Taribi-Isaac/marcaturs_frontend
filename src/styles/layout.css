@@ -64,7 +64,7 @@
   top: 0;
   z-index: 50;
   height: var(--header-h);
-  background: rgb(246 247 245 / 92%);
+  background: rgb(243 245 242 / 92%);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--color-border);
 }

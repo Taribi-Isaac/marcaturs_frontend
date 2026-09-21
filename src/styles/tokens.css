@@ -1,39 +1,42 @@
 :root {
-  /* Colour — restrained marketplace palette */
-  --color-primary: #0d6b5c;
-  --color-primary-hover: #0a5649;
-  --color-primary-soft: #e4f2ee;
-  --color-bg: #f6f7f5;
+  /* Colour — commercial teal marketplace (not purple SaaS, not cream terracotta) */
+  --color-primary: #0c5c4f;
+  --color-primary-hover: #09483e;
+  --color-primary-soft: #e6f3ef;
+  --color-accent: #c45c26;
+  --color-bg: #f3f5f2;
+  --color-bg-deep: #e8ece8;
   --color-surface: #ffffff;
-  --color-ink: #0e1a17;
-  --color-muted: #5c6b66;
-  --color-border: #d5dbd7;
+  --color-ink: #0c1613;
+  --color-muted: #53635e;
+  --color-border: #cfd6d2;
   --color-success: #1f7a4c;
   --color-warning: #9a6b1a;
   --color-danger: #a33b32;
-  --color-focus: #0d6b5c;
-  --color-surface-muted: #eef1ef;
-  --color-on-dark: #d7e0dc;
-  --color-on-dark-muted: #9eb0a8;
+  --color-focus: #0c5c4f;
+  --color-surface-muted: #ebeef0;
+  --color-on-dark: #dce8e3;
+  --color-on-dark-muted: #a3b5ad;
+  --color-hero-ink: #f7faf8;
 
-  /* Typography */
-  --font-display: 'Syne Variable', Syne, system-ui, sans-serif;
-  --font-body: 'Figtree Variable', Figtree, system-ui, sans-serif;
+  /* Typography — Syne display + Figtree body (already loaded) */
+  --font-display: 'Syne Variable', Syne, ui-sans-serif, sans-serif;
+  --font-body: 'Figtree Variable', Figtree, ui-sans-serif, sans-serif;
 
-  --text-display: clamp(2.5rem, 5vw, 3.75rem);
-  --text-h1: clamp(2rem, 3.5vw, 2.75rem);
-  --text-h2: clamp(1.5rem, 2.5vw, 2rem);
-  --text-h3: 1.25rem;
+  --text-display: clamp(2.6rem, 5.2vw, 3.9rem);
+  --text-h1: clamp(2rem, 3.4vw, 2.85rem);
+  --text-h2: clamp(1.45rem, 2.4vw, 2rem);
+  --text-h3: 1.2rem;
   --text-body: 1.0625rem;
   --text-small: 0.875rem;
-  --text-label: 0.8125rem;
+  --text-label: 0.78rem;
 
-  --leading-tight: 1.15;
+  --leading-tight: 1.12;
   --leading-snug: 1.35;
-  --leading-body: 1.6;
+  --leading-body: 1.62;
 
   /* Layout */
-  --container: 1120px;
+  --container: 1140px;
   --container-narrow: 720px;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -43,14 +46,14 @@
   --space-6: 2rem;
   --space-7: 3rem;
   --space-8: 4.5rem;
-  --space-9: 6rem;
+  --space-9: 6.5rem;
 
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
 
-  --shadow-soft: 0 1px 2px rgb(14 26 23 / 4%), 0 8px 24px rgb(14 26 23 / 6%);
-  --header-h: 4rem;
+  --shadow-soft: 0 1px 2px rgb(12 22 19 / 5%), 0 10px 28px rgb(12 22 19 / 7%);
+  --header-h: 4.1rem;
   --transition: 160ms ease;
 }
 

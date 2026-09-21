@@ -5,6 +5,8 @@ import { AmbassadorShell } from '@/app/layout/AmbassadorShell'
 import { RequireAuth } from '@/features/auth/RequireAuth'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { RegisterPage } from '@/features/auth/RegisterPage'
+import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage'
+import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
 import { HomePage } from '@/features/marketing/HomePage'
 import {
   AboutPage,
@@ -13,8 +15,8 @@ import {
   ForAmbassadorsPage,
   ForBusinessesPage,
   HowItWorksPage,
-  LegalPlaceholderPage,
 } from '@/features/marketing/StaticPages'
+import { PrivacyPage, TermsPage } from '@/features/marketing/LegalPages'
 import { DiscoverPage } from '@/features/marketplace/DiscoverPage'
 import { CampaignDetailPage } from '@/features/marketplace/CampaignDetailPage'
 import { AccountBlockedPage, ForbiddenPage, NotFoundPage } from '@/features/app/PlaceholderPages'
@@ -22,6 +24,7 @@ import { CampaignListPage } from '@/features/business-campaigns/CampaignListPage
 import { CampaignCreatePage } from '@/features/business-campaigns/CampaignCreatePage'
 import { BusinessCampaignDetailPage } from '@/features/business-campaigns/BusinessCampaignDetailPage'
 import { AmbassadorDiscoverPage } from '@/features/ambassador-deals/AmbassadorDiscoverPage'
+import { AmbassadorHomePage } from '@/features/ambassador-deals/AmbassadorHomePage'
 import { DealListPage } from '@/features/ambassador-deals/DealListPage'
 import { DealDetailPage } from '@/features/ambassador-deals/DealDetailPage'
 import { CreateDealPage } from '@/features/ambassador-deals/CreateDealPage'
@@ -38,6 +41,13 @@ import { ParticipantNotificationsPage } from '@/features/participant-notificatio
 import { ParticipantMessagesPage } from '@/features/participant-messages/ParticipantMessagesPage'
 import { ParticipantVerificationPage } from '@/features/participant-verification/ParticipantVerificationPage'
 import { ParticipantSettingsPage } from '@/features/participant-settings/ParticipantSettingsPage'
+import { CertificationHubPage } from '@/features/ambassador-certification/CertificationHubPage'
+import { ProgrammeCataloguePage } from '@/features/ambassador-certification/ProgrammeCataloguePage'
+import { ProgrammeDetailPage } from '@/features/ambassador-certification/ProgrammeDetailPage'
+import { PurchaseReturnPage } from '@/features/ambassador-certification/PurchaseReturnPage'
+import { EnrollmentLearningPage } from '@/features/ambassador-certification/EnrollmentLearningPage'
+import { AssessmentPage } from '@/features/ambassador-certification/AssessmentPage'
+import { CertificatesPage } from '@/features/ambassador-certification/CertificatesPage'
 
 export function AppRouter() {
   return useRoutes([
@@ -54,10 +64,12 @@ export function AppRouter() {
         { path: '/about', element: <AboutPage /> },
         { path: '/contact', element: <ContactPage /> },
         { path: '/faq', element: <FaqPage /> },
-        { path: '/terms', element: <LegalPlaceholderPage kind="terms" /> },
-        { path: '/privacy', element: <LegalPlaceholderPage kind="privacy" /> },
+        { path: '/terms', element: <TermsPage /> },
+        { path: '/privacy', element: <PrivacyPage /> },
         { path: '/login', element: <LoginPage /> },
         { path: '/register', element: <RegisterPage /> },
+        { path: '/forgot-password', element: <ForgotPasswordPage /> },
+        { path: '/reset-password', element: <ResetPasswordPage /> },
         { path: '/forbidden', element: <ForbiddenPage /> },
         { path: '/account-blocked', element: <AccountBlockedPage /> },
       ],
@@ -142,6 +154,10 @@ export function AppRouter() {
           children: [
             {
               index: true,
+              element: <AmbassadorHomePage />,
+            },
+            {
+              path: 'discover',
               element: <AmbassadorDiscoverPage />,
             },
             {
@@ -179,6 +195,34 @@ export function AppRouter() {
             {
               path: 'verification',
               element: <ParticipantVerificationPage role="AMBASSADOR" />,
+            },
+            {
+              path: 'certification',
+              element: <CertificationHubPage />,
+            },
+            {
+              path: 'certification/programmes',
+              element: <ProgrammeCataloguePage />,
+            },
+            {
+              path: 'certification/programmes/:programmeId',
+              element: <ProgrammeDetailPage />,
+            },
+            {
+              path: 'certification/purchase/return',
+              element: <PurchaseReturnPage />,
+            },
+            {
+              path: 'certification/enrollments/:enrollmentId',
+              element: <EnrollmentLearningPage />,
+            },
+            {
+              path: 'certification/enrollments/:enrollmentId/assessment',
+              element: <AssessmentPage />,
+            },
+            {
+              path: 'certification/certificates',
+              element: <CertificatesPage />,
             },
             {
               path: 'notifications',

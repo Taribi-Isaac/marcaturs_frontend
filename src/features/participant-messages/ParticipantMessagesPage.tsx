@@ -9,7 +9,6 @@ import { EmptyState, ErrorState, LoadingState, PageMeta } from '@/shared/ui/Stat
 import { fetchConversations, openConversation } from './api'
 import { ConversationThread } from './ConversationThread'
 import { conversationKeys } from './queryKeys'
-import { StartConversationForm } from './StartConversationForm'
 
 type ParticipantRole = Extract<UserRole, 'BUSINESS' | 'AMBASSADOR'>
 
@@ -93,8 +92,8 @@ export function ParticipantMessagesPage({ role }: { role: ParticipantRole }) {
           <div>
             <h1>Messages</h1>
             <p>
-              Direct conversation with your {role === 'BUSINESS' ? 'Ambassadors' : 'Businesses'}.
-              Chat is independent of Deals and Campaigns — one conversation per relationship.
+              Business ↔ Ambassador conversations. Ambassadors start chats from an eligible Campaign
+              with Message Business.
             </p>
           </div>
         </header>
@@ -110,8 +109,7 @@ export function ParticipantMessagesPage({ role }: { role: ParticipantRole }) {
             <div>
               <h2>Inbox</h2>
               <p className="form-section__lead">
-                Ordered by most recently updated. Conversation identity and counterpart only —
-                message previews appear when the API exposes them.
+                Ordered by most recently updated.
               </p>
             </div>
 
@@ -138,8 +136,17 @@ export function ParticipantMessagesPage({ role }: { role: ParticipantRole }) {
 
             {list.isSuccess && items.length === 0 ? (
               <EmptyState title="No conversations yet">
-                Start from a Deal or counterpart relationship when you need to discuss terms,
-                evidence, or commission — MarcatursHub messages are Business ↔ Ambassador only.
+                {role === 'AMBASSADOR' ? (
+                  <>
+                    Open an eligible Campaign and choose <strong>Message Business</strong> to start a
+                    conversation. You do not need a Business ID.
+                  </>
+                ) : (
+                  <>
+                    Conversations appear here when an Ambassador messages you from a Campaign, or when
+                    you continue an existing thread.
+                  </>
+                )}
               </EmptyState>
             ) : null}
 
@@ -214,9 +221,6 @@ export function ParticipantMessagesPage({ role }: { role: ParticipantRole }) {
               </div>
             ) : null}
 
-            {!hasThread ? (
-              <StartConversationForm role={role} onOpened={(id) => navigate(`${basePath}/${id}`)} />
-            ) : null}
           </section>
 
           <section className={`chat-pane${hasThread ? '' : ' chat-pane--empty'}`}>

@@ -4,14 +4,16 @@ import { Button } from '@/shared/ui/Button'
 import { PageMeta } from '@/shared/ui/States'
 
 export function ForbiddenPage() {
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   return (
     <>
       <PageMeta title="Access unavailable" />
       <div className="auth-panel">
         <h1>This app is for marketplace participants</h1>
         <p className="auth-panel__lead">
-          Admin accounts use Admin Control. Business and Ambassador accounts continue here.
+          {user?.role === 'ADMIN'
+            ? 'Admin accounts use the Admin Control application, not this participant workspace.'
+            : 'You are signed in, but this area is not available for your account. This is not a login failure.'}
         </p>
         <div className="row">
           <Button onClick={() => void logout()}>Sign out</Button>

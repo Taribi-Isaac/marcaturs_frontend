@@ -19,6 +19,14 @@ function classifyUser(user: AuthUser): AuthStatus {
   return 'forbidden_role'
 }
 
+function isBlockedMeError(error: unknown): boolean {
+  return (
+    error instanceof ApiClientError &&
+    error.status === 403 &&
+    /not permitted|banned|suspended/i.test(error.message)
+  )
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
 
@@ -44,6 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (meQuery.error instanceof ApiClientError && meQuery.error.status === 401) {
         return 'unauthenticated'
       }
+      if (isBlockedMeError(meQuery.error)) {
+        return 'blocked'
+      }
+      // 403 (restricted/email) or network/5xx — stay recoverable; do not force login.
       return 'error'
     }
     if (!user) return 'unauthenticated'
@@ -65,12 +77,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryFn: ({ signal }) => fetchCurrentUser(signal),
       })
       if (next.role === 'ADMIN') {
-        try {
-          await logoutRequest()
-        } catch {
-          // ignore
-        }
         queryClient.setQueryData(AUTH_ME_QUERY_KEY, null)
+        void logoutRequest().catch(() => {
+          // Best-effort clear of the accidental Admin SPA session.
+        })
         throw new ApiClientError({
           code: 'forbidden',
           message: 'Admin accounts use the Admin Control application.',

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { formatDateTime } from '@/features/ambassador-deals/format'
+import { formatDate, formatDateTime } from '@/features/ambassador-deals/format'
 import { useAuth } from '@/features/auth/authContext'
 import { fetchVerificationStatus } from '@/features/participant-verification/api'
 import { verificationKeys } from '@/features/participant-verification/queryKeys'
@@ -11,7 +11,9 @@ import {
 import type { UserRole } from '@/shared/types/auth'
 import { ButtonLink } from '@/shared/ui/Button'
 import { PageMeta } from '@/shared/ui/States'
+import { fetchAmbassadorProfile } from './api'
 import { ChangePasswordForm } from './ChangePasswordForm'
+import { EmailVerificationActions } from './EmailVerificationActions'
 import {
   accountStatusBadgeClass,
   accountStatusExplanation,
@@ -19,6 +21,7 @@ import {
   roleLabel,
 } from './presentation'
 import { AmbassadorProfileSection, BusinessProfileSection } from './ProfileForms'
+import { settingsKeys } from './queryKeys'
 
 type ParticipantRole = Extract<UserRole, 'BUSINESS' | 'AMBASSADOR'>
 
@@ -35,9 +38,18 @@ export function ParticipantSettingsPage({ role }: { role: ParticipantRole }) {
     retry: false,
   })
 
+  const ambassadorProfile = useQuery({
+    queryKey: settingsKeys.ambassadorProfile(),
+    queryFn: ({ signal }) => fetchAmbassadorProfile(signal),
+    enabled: role === 'AMBASSADOR' && Boolean(user && !restricted),
+    retry: false,
+  })
+
   if (!user) {
     return null
   }
+
+  const certification = ambassadorProfile.data?.certification
 
   return (
     <>
@@ -49,10 +61,7 @@ export function ParticipantSettingsPage({ role }: { role: ParticipantRole }) {
         <header className="desk-header">
           <div>
             <h1>Settings</h1>
-            <p>
-              Account identity, {role === 'BUSINESS' ? 'Business' : 'Ambassador'} profile, and
-              password security for your MarcatursHub workspace.
-            </p>
+            <p>Account identity, profile, email verification, and security.</p>
           </div>
         </header>
 
@@ -60,8 +69,8 @@ export function ParticipantSettingsPage({ role }: { role: ParticipantRole }) {
           <div>
             <h2 id="settings-account">Account</h2>
             <p className="form-section__lead">
-              Account identity from MarcatursHub authentication. These fields are not edited here —
-              profile details below are separate marketplace information.
+              Identity from authentication. Profile details below are separate marketplace
+              information.
             </p>
           </div>
           <dl className="settings-dl">
@@ -100,6 +109,7 @@ export function ParticipantSettingsPage({ role }: { role: ParticipantRole }) {
               <dd>{formatDateTime(user.created_at)}</dd>
             </div>
           </dl>
+          <EmailVerificationActions />
           <p className="settings-status-note" role="status">
             {accountStatusExplanation(user.status)}
           </p>
@@ -116,6 +126,58 @@ export function ParticipantSettingsPage({ role }: { role: ParticipantRole }) {
           )}
         </section>
 
+        {role === 'AMBASSADOR' ? (
+          <section className="card stack settings-section" aria-labelledby="settings-certification">
+            <div>
+              <h2 id="settings-certification">Certification</h2>
+              <p className="form-section__lead">
+                Optional professional development — distinct from participant Verification.{' '}
+                <Link to="/faq">Learn more</Link>
+              </p>
+            </div>
+            {restricted ? (
+              <p className="form-section__lead" role="status">
+                Certification details may be limited while your account is restricted.{' '}
+                <Link to="/app/ambassador/certification">Open certification</Link>
+              </p>
+            ) : ambassadorProfile.isSuccess && certification?.is_certified ? (
+              <div className="stack">
+                <span className="badge badge--success">
+                  {certification.label ?? 'Certified MarcatursHub Ambassador'}
+                </span>
+                <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                  {certification.awards.map((award) => (
+                    <li key={award.id}>
+                      {award.programme_name ?? 'Programme'} · Version{' '}
+                      {award.programme_version_number ?? '—'}
+                      {award.awarded_at ? ` · ${formatDate(award.awarded_at)}` : ''}
+                    </li>
+                  ))}
+                </ul>
+                <ButtonLink to="/app/ambassador/certification/certificates" variant="secondary" size="sm">
+                  View certificates
+                </ButtonLink>
+              </div>
+            ) : ambassadorProfile.isSuccess ? (
+              <div className="settings-verification-summary">
+                <span className="badge">Not certified</span>
+                <ButtonLink to="/app/ambassador/certification" variant="secondary" size="sm">
+                  Explore certification
+                </ButtonLink>
+              </div>
+            ) : ambassadorProfile.isError ? (
+              <p className="form-section__lead">
+                Certification status could not be loaded.{' '}
+                <Link to="/app/ambassador/certification">Open certification</Link>
+              </p>
+            ) : (
+              <p className="form-section__lead">
+                <Link to="/app/ambassador/certification">Open certification</Link>
+              </p>
+            )}
+          </section>
+        ) : null}
+
         <section className="card stack settings-section" aria-labelledby="settings-security">
           <div>
             <h2 id="settings-security">Security</h2>
@@ -128,7 +190,7 @@ export function ParticipantSettingsPage({ role }: { role: ParticipantRole }) {
             <h2 id="settings-verification">Verification</h2>
             <p className="form-section__lead">
               A short summary of your verification status. Full requirements and submissions live on
-              the Verification page.
+              the Verification page. Verification is not the same as certification.
             </p>
           </div>
           {verification.isSuccess ? (

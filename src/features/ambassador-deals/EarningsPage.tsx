@@ -23,8 +23,7 @@ export function EarningsPage() {
           <div>
             <h1>Earnings</h1>
             <p>
-              Get paid when the Business confirms your customer&apos;s payment. The Business pays
-              you directly — MarcatursHub does not auto-transfer commission in MVP.
+              Get paid when the Business confirms your customer&apos;s payment.
             </p>
           </div>
           <ButtonLink to="/app/ambassador/deals" variant="secondary">
@@ -49,7 +48,7 @@ export function EarningsPage() {
           <EmptyState title="No commission records yet">
             <p>
               Commission appears here after a Business confirms payment on one of your Deals. The
-              Business pays you directly — MarcatursHub does not auto-transfer funds.
+              Business pays you directly.
             </p>
             <ButtonLink to="/discover">Choose an offer worth selling</ButtonLink>
           </EmptyState>

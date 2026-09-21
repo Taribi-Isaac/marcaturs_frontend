@@ -1,22 +1,58 @@
+import ambassador1 from '@/assets/images/ambassador1.jpg'
+import ambassador2 from '@/assets/images/ambassador2.jpg'
+import businessMen from '@/assets/images/business-men.jpg'
+import businessWomen from '@/assets/images/business-women.jpg'
+import handshake from '@/assets/images/handshake.jpg'
+import officeMeeting from '@/assets/images/office-meeting.jpg'
+import officeStaff from '@/assets/images/office-staff1.jpg'
+import supportStaff from '@/assets/images/support-staff.jpg'
+import products from '@/assets/images/products.jpg'
+import graduation from '@/assets/images/graduation.jpg'
+
+
 /**
- * Curated remote imagery placeholders — replace with production assets later.
- * Unsplash Source with stable photo IDs.
+ * Local production imagery for public marketing surfaces (MH-FE-019).
+ * `cart-on-keyboard.jpg` is intentionally unused — too stock/literal for brand pages.
  */
 export const images = {
   hero: {
-    src: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1800&q=80',
-    alt: 'Business owner and colleague reviewing opportunities together',
+    src: businessWomen,
+    alt: 'Business professionals collaborating in a modern office',
   },
   ambassadors: {
-    src: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1200&q=80',
-    alt: 'Ambassador speaking with a prospective customer',
+    src: ambassador2,
+    alt: 'Independent ambassador ready to promote commercial opportunities',
+  },
+  ambassadorsSecondary: {
+    src: ambassador1,
+    alt: 'Ambassador connecting with customers in a commercial setting',
   },
   business: {
-    src: 'https://images.unsplash.com/photo-1542744173-8e2bd1f9b421?auto=format&fit=crop&w=1200&q=80',
-    alt: 'Business team collaborating in a workspace',
+    src: businessMen,
+    alt: 'Business leaders reviewing commercial plans together',
   },
-  trust: {
-    src: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=80',
-    alt: 'Professional reviewing documents with confidence',
+  collaboration: {
+    src: handshake,
+    alt: 'Handshake closing a Business and Ambassador partnership',
+  },
+  about: {
+    src: officeMeeting,
+    alt: 'Team meeting in a professional workspace',
+  },
+  office: {
+    src: officeStaff,
+    alt: 'Office colleagues working together',
+  },
+  products: {
+    src: products,
+    alt: 'Products displayed in a modern office',
+  },
+  graduation: {
+    src: graduation,
+    alt: 'Graduation ceremony in a modern office',
+  },
+  support: {
+    src: supportStaff,
+    alt: 'Support specialist ready to assist participants',
   },
 } as const

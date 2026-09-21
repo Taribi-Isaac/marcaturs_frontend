@@ -459,7 +459,7 @@ describe('MH-FE-P03 ambassador commercial journey', () => {
     const user = userEvent.setup()
     renderApp('/discover')
     expect(
-      await screen.findByRole('heading', { name: /choose an offer worth selling/i }),
+      await screen.findByRole('heading', { name: /find an offer worth promoting/i }),
     ).toBeInTheDocument()
     expect(await screen.findByText(/demo solar street light kits/i)).toBeInTheDocument()
     expect(screen.getByText(/highlighted opportunities/i)).toBeInTheDocument()

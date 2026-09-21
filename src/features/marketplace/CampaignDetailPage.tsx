@@ -1,13 +1,17 @@
-import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AmbassadorResourceImage } from '@/features/ambassador-deals/AmbassadorResourceImage'
 import { campaignAllowsNewDeals } from '@/features/ambassador-deals/helpers'
 import { useAuth } from '@/features/auth/authContext'
 import { CampaignCoverVisual } from '@/features/marketplace/CampaignCoverVisual'
 import { fetchMarketplaceCampaign } from '@/features/marketplace/api'
 import { businessDisplayName, formatCommission, formatMoney } from '@/features/marketplace/format'
-import { ButtonLink } from '@/shared/ui/Button'
+import { openConversation } from '@/features/participant-messages/api'
+import { ApiClientError } from '@/shared/api/errors'
+import { Button, ButtonLink } from '@/shared/ui/Button'
 import { ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
+import { coverImageSrc } from '@/features/marketplace/cover'
+import { toAbsolutePublicUrl } from '@/shared/seo/publicOrigin'
 
 function Block({ title, body }: { title: string; body?: string | null }) {
   if (!body) return null
@@ -21,6 +25,7 @@ function Block({ title, body }: { title: string; body?: string | null }) {
 
 export function CampaignDetailPage() {
   const params = useParams()
+  const navigate = useNavigate()
   const id = Number(params.id)
   const { user, status } = useAuth()
   const isParticipantSession = status === 'authenticated' || status === 'restricted'
@@ -34,6 +39,20 @@ export function CampaignDetailPage() {
     enabled: Number.isFinite(id) && id > 0,
   })
 
+  const messageBusiness = useMutation({
+    mutationFn: () => openConversation({ campaign_id: id }),
+    onSuccess: (result) => {
+      navigate(`/app/ambassador/messages/${result.data.id}`)
+    },
+  })
+
+  const messageError =
+    messageBusiness.error instanceof ApiClientError
+      ? messageBusiness.error.message
+      : messageBusiness.isError
+        ? 'Could not open a conversation with this Business.'
+        : null
+
   if (!Number.isFinite(id) || id <= 0) {
     return <ErrorState title="Campaign not found" />
   }
@@ -41,9 +60,16 @@ export function CampaignDetailPage() {
   if (query.isLoading) return <LoadingState label="Loading campaign…" />
   if (query.isError || !query.data) {
     return (
-      <ErrorState title="Campaign unavailable">
-        This opportunity may no longer be public, or the marketplace is temporarily offline.
-      </ErrorState>
+      <>
+        <PageMeta
+          title="Campaign unavailable"
+          description="This campaign is not available on the MarcatursHub marketplace."
+          indexable={false}
+        />
+        <ErrorState title="Campaign unavailable">
+          This opportunity may no longer be public, or the marketplace is temporarily offline.
+        </ErrorState>
+      </>
     )
   }
 
@@ -55,12 +81,23 @@ export function CampaignDetailPage() {
     (resource) => resource.type === 'image' || resource.mime_type?.startsWith('image/'),
   )
   const leadImage = imageResources[0]
+  const ogImage = coverAvailable
+    ? toAbsolutePublicUrl(coverImageSrc(campaign.cover_image?.url))
+    : null
+  const metaDescription = [
+    campaign.product_name || campaign.title,
+    formatCommission(campaign),
+  ]
+    .filter(Boolean)
+    .join(' — ')
 
   return (
     <>
       <PageMeta
         title={campaign.title}
-        description={`${campaign.product_name || campaign.title} — ${formatCommission(campaign)}`}
+        description={metaDescription}
+        imageUrl={ogImage}
+        indexable={eligible}
       />
       <section className="campaign-visual-hero">
         <div className="campaign-visual-hero__media">
@@ -178,15 +215,15 @@ export function CampaignDetailPage() {
           </div>
 
           <aside className="detail-aside stack">
-            <div className="card stack">
+            <div className="card stack detail-commercial">
               <div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>Commission</p>
-                <strong className="commission-hero__value" style={{ fontSize: '1.65rem' }}>
+                <p className="detail-meta__label">Commission</p>
+                <strong className="commission-hero__value detail-commercial__commission">
                   {formatCommission(campaign)}
                 </strong>
               </div>
               <div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>Pricing</p>
+                <p className="detail-meta__label">Pricing</p>
                 <strong>
                   {campaign.price_amount
                     ? formatMoney(campaign.price_amount, campaign.price_currency)
@@ -195,25 +232,23 @@ export function CampaignDetailPage() {
               </div>
               {campaign.service_area ? (
                 <div>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>Service area</p>
+                  <p className="detail-meta__label">Service area</p>
                   <strong>{campaign.service_area}</strong>
                 </div>
               ) : null}
               {campaign.commission_payment_deadline_days ? (
                 <div>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>
-                    Commission deadline
-                  </p>
+                  <p className="detail-meta__label">Commission deadline</p>
                   <strong>
                     {campaign.commission_payment_deadline_days} days after confirmation
                   </strong>
                 </div>
               ) : null}
               <div className="alert alert--info">
-                Customers pay the Business directly. Account identifiers stay on the Official
-                Payment page — not on this public listing.
+                Customers pay the Business directly. More information on the Official
+                Payment page.
                 {(campaign.payment_destination_name || campaign.payment_provider) && (
-                  <p style={{ marginTop: '0.75rem' }}>
+                  <p className="detail-commercial__payment-note">
                     <strong>{campaign.payment_destination_name || 'Business destination'}</strong>
                     {campaign.payment_provider ? ` · ${campaign.payment_provider}` : ''}
                   </p>
@@ -226,14 +261,40 @@ export function CampaignDetailPage() {
                     <ButtonLink to={`/app/ambassador/deals/new?campaign=${campaign.id}`}>
                       Create Deal
                     </ButtonLink>
+                    {status === 'authenticated' ? (
+                      <>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={messageBusiness.isPending}
+                          onClick={() => messageBusiness.mutate()}
+                        >
+                          {messageBusiness.isPending ? 'Opening chat…' : 'Message Business'}
+                        </Button>
+                        {messageError ? (
+                          <p className="field-error" role="alert">
+                            {messageError}
+                          </p>
+                        ) : (
+                          <p className="form-section__lead">
+                            Opens your conversation with this Business. You do not need a Business
+                            ID.
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="form-section__lead">
+                        Messaging requires an active Ambassador account.
+                      </p>
+                    )}
                     <p className="form-section__lead">
                       Get paid when the Business confirms your customer&apos;s payment.
                     </p>
                   </>
                 ) : (
                   <div className="alert alert--warning">
-                    New Deals are only available while this campaign is active or expiring. Current
-                    status: {campaign.status}.
+                    New Deals and messaging from this listing are only available while the campaign
+                    is active or expiring. Current status: {campaign.status}.
                   </div>
                 )
               ) : null}
@@ -241,7 +302,7 @@ export function CampaignDetailPage() {
               {isBusiness ? (
                 <div className="alert alert--info">
                   You&apos;re signed in as a Business. Deal creation is an Ambassador action.
-                  <div style={{ marginTop: '0.75rem' }}>
+                  <div className="detail-commercial__actions">
                     <ButtonLink to="/app/business/campaigns" variant="secondary">
                       Open business campaigns
                     </ButtonLink>
@@ -263,17 +324,13 @@ export function CampaignDetailPage() {
                 </>
               ) : null}
             </div>
-            <div className="card">
-              <h3 style={{ fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>
-                {business}
-              </h3>
-              <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
+            <div className="card detail-business">
+              <h3 className="detail-business__name">{business}</h3>
+              <p className="detail-business__meta">
                 Verification: {campaign.business.verification_status.replaceAll('_', ' ')}
               </p>
               {campaign.business.operating_location ? (
-                <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
-                  {campaign.business.operating_location}
-                </p>
+                <p className="detail-business__meta">{campaign.business.operating_location}</p>
               ) : null}
             </div>
           </aside>

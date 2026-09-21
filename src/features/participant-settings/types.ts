@@ -22,6 +22,19 @@ export type AmbassadorProfile = {
   skills: string[]
   marketing_interests: string[]
   experience: string | null
+  certification?: {
+    is_certified: boolean
+    label: string | null
+    awards: Array<{
+      id: number
+      programme_id: number
+      programme_version_id: number
+      programme_name: string | null
+      programme_version_number: number | null
+      awarded_at: string | null
+      certificate_id: number | null
+    }>
+  }
   created_at: string | null
   updated_at: string | null
 }

@@ -15,7 +15,7 @@ export function MediaFrame({ src, alt, wide = false, className }: Props) {
         .filter(Boolean)
         .join(' ')}
     >
-      <img src={src} alt={alt} loading="lazy" />
+      <img src={src} alt={alt} loading="lazy" decoding="async" />
     </div>
   )
 }

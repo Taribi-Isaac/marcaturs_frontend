@@ -16,27 +16,29 @@ export function HomePage() {
   return (
     <>
       <PageMeta
-        title="Ambassador marketplace"
-        description="Businesses publish opportunities. Ambassadors choose what fits. Real customer conversations become real Deals."
+        title="More reach for businesses. More opportunity for ambassadors"
+        description="MarcatursHub connects businesses with independent ambassadors who discover, promote and represent products and services they believe in — with customers paying businesses directly."
       />
-      <section className="hero" aria-label="Marketplace introduction">
-        <div className="hero__media" aria-hidden>
-          <img src={images.hero.src} alt="" />
+
+      <section className="hero" aria-label="MarcatursHub introduction">
+        <div className="hero__media">
+          <img src={images.hero.src} alt={images.hero.alt} fetchPriority="high" decoding="async" />
         </div>
         <div className="hero__scrim" />
         <div className="container hero__content reveal">
-          <p className="hero__eyebrow">Distributed sales marketplace</p>
-          <h1>Businesses publish opportunities. Ambassadors choose what fits.</h1>
+          <p className="hero__brand">MarcatursHub</p>
+          <h1>More reach for businesses. More opportunities for independent ambassadors.</h1>
           <p className="hero__lead">
-            Real customer conversations become real Deals. Customers pay businesses directly —
-            MarcatursHub coordinates the commercial record, not the money.
+            Connect your business with people ready to discover, understand and promote what you
+            sell  or find products and services worth representing through the network you already
+            have.
           </p>
-          <div className="row">
-            <ButtonLink to="/discover" variant="on-dark">
-              Browse opportunities
+          <div className="row hero__actions">
+            <ButtonLink to="/register?role=BUSINESS" variant="on-dark">
+              Publish an opportunity
             </ButtonLink>
-            <ButtonLink to="/how-it-works" variant="on-dark-ghost">
-              See how it works
+            <ButtonLink to="/register?role=AMBASSADOR" variant="on-dark-ghost">
+              Become an Ambassador
             </ButtonLink>
           </div>
         </div>
@@ -44,22 +46,35 @@ export function HomePage() {
 
       <section className="section">
         <div className="container">
-          <SectionHeading eyebrow="Money flow" title="Clear boundaries. Direct payments.">
-            Three parties. Two payment flows. No platform wallet for customer or commission money.
-          </SectionHeading>
-          <div className="money-flow">
-            <div className="money-flow__item">
-              <strong>Customer → Business</strong>
-              <span>Customers pay the business directly for the product or service.</span>
+          <div className="split-visual">
+            <div>
+              <SectionHeading
+                eyebrow="For businesses"
+                title="Put more people behind your business."
+              >
+                Gain independent sales reach without building a traditional sales team first.
+                Ambassadors choose campaigns they believe in and introduce your offer through their
+                own networks and channels.
+              </SectionHeading>
+              <ul className="split-list benefit-list">
+                <li>
+                  <strong>Reach more customers:</strong>  through people who already have
+                  relationships, communities and influence.
+                </li>
+                <li>
+                  <strong>Keep control of your campaign:</strong>  you set pricing, commission
+                  terms, approved materials and rules.
+                </li>
+                <li>
+                  <strong>Reward qualifying results:</strong>  commission becomes due when you
+                  confirm a qualifying payment, not empty impressions.
+                </li>
+              </ul>
+              <div className="row">
+                <ButtonLink to="/for-businesses">See the business opportunity</ButtonLink>
+              </div>
             </div>
-            <div className="money-flow__item">
-              <strong>Business → Ambassador</strong>
-              <span>After qualifying confirmation, the business pays commission directly.</span>
-            </div>
-            <div className="money-flow__item">
-              <strong>MarcatursHub coordinates</strong>
-              <span>Campaigns, evidence, confirmation, deadlines, and disputes — not custody.</span>
-            </div>
+            <MediaFrame src={images.business.src} alt={images.business.alt} />
           </div>
         </div>
       </section>
@@ -67,30 +82,84 @@ export function HomePage() {
       <section className="section section--tight surface-band">
         <div className="container">
           <div className="split-visual">
+            <MediaFrame src={images.ambassadors.src} alt={images.ambassadors.alt} />
             <div>
-              <SectionHeading eyebrow="How it works" title="From opportunity to Deal.">
-                Track the moments that matter — not every conversation. The Deal, not the Lead.
+              <SectionHeading
+                eyebrow="For ambassadors"
+                title="Earn from opportunities you believe in — while staying independent."
+              >
+                Your 9–5 does not have to be your only opportunity. Explore businesses and products
+                you can represent independently  without becoming an employee of the business.
               </SectionHeading>
-              <ol className="split-list">
-                <li>Business publishes a commission-based campaign.</li>
-                <li>Ambassador discovers it and promotes through their own channels.</li>
-                <li>Customer pays the business directly.</li>
-                <li>Qualifying payment is confirmed and commission becomes due.</li>
-              </ol>
+              <ul className="split-list benefit-list">
+                <li>
+                  <strong>Choose what fits:</strong>  promote campaigns you understand and believe
+                  you can sell.
+                </li>
+                <li>
+                  <strong>Use what you already have:</strong>  your network, knowledge,
+                  relationships and channels.
+                </li>
+                <li>
+                  <strong>Earn on qualifying completed deals:</strong>  commission follows
+                  confirmation of qualifying payment under published campaign terms.
+                </li>
+              </ul>
               <div className="row">
-                <ButtonLink to="/how-it-works">Full walkthrough</ButtonLink>
+                <ButtonLink to="/for-ambassadors">See the ambassador opportunity</ButtonLink>
               </div>
             </div>
-            <MediaFrame src={images.ambassadors.src} alt={images.ambassadors.alt} />
           </div>
         </div>
       </section>
 
       <section className="section">
         <div className="container">
+          <SectionHeading
+            eyebrow="The opportunity"
+            title="A marketplace that connects sales reach with independent promotion."
+          >
+            Businesses need more people introducing what they sell. Capable people already have
+            networks that can create that reach. MarcatursHub brings both sides together, then
+            records the commercial moments that matter.
+          </SectionHeading>
+          <div className="grid-3 feature-points">
+            {[
+              {
+                title: 'Discover',
+                body: 'Ambassadors find campaigns with clear products, terms and commission structures.',
+              },
+              {
+                title: 'Enable',
+                body: 'Businesses equip ambassadors with approved information, materials and rules.',
+              },
+              {
+                title: 'Account',
+                body: 'Deals, payment evidence, confirmation and commission status create a clear commercial record.',
+              },
+            ].map((item) => (
+              <article key={item.title} className="feature-point">
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </article>
+            ))}
+          </div>
+          <div className="row section-actions">
+            <ButtonLink to="/how-it-works" variant="secondary">
+              See how it works
+            </ButtonLink>
+            <ButtonLink to="/discover" variant="ghost">
+              Browse live opportunities
+            </ButtonLink>
+          </div>
+        </div>
+      </section>
+
+      <section className="section section--tight surface-band">
+        <div className="container">
           <div className="marketplace-preview-header">
-            <SectionHeading eyebrow="Marketplace" title="Live opportunities.">
-              Browse public campaigns. Sign in as an Ambassador to create Deals.
+            <SectionHeading eyebrow="Marketplace" title="Opportunities waiting to be promoted.">
+              Explore live campaigns. Sign in as an Ambassador when you are ready to create a Deal.
             </SectionHeading>
             <ButtonLink to="/discover" variant="secondary">
               View all
@@ -117,39 +186,62 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="section section--tight">
-        <div className="container grid-2">
-          <article className="card audience-card">
-            <p className="eyebrow">For businesses</p>
-            <h3>Publish opportunities. Confirm results. Pay ambassadors directly.</h3>
-            <p>
-              Set commission terms, share approved materials, confirm qualifying payments, and
-              settle commissions Business → Ambassador — without platform custody.
-            </p>
-            <Link to="/for-businesses">Why businesses join →</Link>
+      <section className="section">
+        <div className="container grid-2 audience-pair">
+          <article className="audience-panel">
+            <div className="audience-panel__media" aria-hidden>
+              <img src={images.business.src} alt="" loading="lazy" decoding="async" />
+            </div>
+            <div className="audience-panel__body">
+              <p className="eyebrow">Why businesses join</p>
+              <h3>Expand without traditional recruitment alone.</h3>
+              <p>
+                Publish commission-based campaigns, share approved materials, confirm qualifying
+                payments, and settle commissions directly with ambassadors.
+              </p>
+              <Link to="/for-businesses">For businesses →</Link>
+            </div>
           </article>
-          <article className="card audience-card">
-            <p className="eyebrow">For ambassadors</p>
-            <h3>Choose what fits. Create Deals. Earn on confirmed results.</h3>
-            <p>
-              Discover campaigns, promote products you understand, create a Deal when a customer is
-              ready, and track confirmation through to commission receipt.
-            </p>
-            <Link to="/for-ambassadors">Why ambassadors join →</Link>
+          <article className="audience-panel">
+            <div className="audience-panel__media" aria-hidden>
+              <img src={images.ambassadorsSecondary.src} alt="" loading="lazy" decoding="async" />
+            </div>
+            <div className="audience-panel__body">
+              <p className="eyebrow">Why ambassadors join</p>
+              <h3>Stay independent. Promote what fits. Build a track record.</h3>
+              <p>
+                Choose campaigns deliberately, learn before you promote, and earn commission when
+                qualifying deals are confirmed — without quitting your current path.
+              </p>
+              <Link to="/for-ambassadors">For ambassadors →</Link>
+            </div>
           </article>
         </div>
       </section>
 
-      <section className="section">
+      <section className="section section--tight">
         <div className="container">
           <div className="split-visual">
-            <MediaFrame src={images.trust.src} alt={images.trust.alt} />
+            <MediaFrame src={images.collaboration.src} alt={images.collaboration.alt} />
             <div>
-              <SectionHeading eyebrow="Trust" title="Verification and clear commercial records.">
-                Trust comes from verification, published terms, payment evidence, and accountable
-                confirmation — not from holding funds.
+              <SectionHeading
+                eyebrow="Trust"
+                title="Customers pay businesses directly. Commissions move the same way."
+              >
+                MarcatursHub coordinates campaigns, Deals, evidence, confirmation and disputes. In
+                the MVP, it does not hold customer purchase funds or ambassador commission money.
+                Trust is built through clear terms, verification, evidence and accountable records.
               </SectionHeading>
-              <ButtonLink to="/register">Create your account</ButtonLink>
+              <div className="money-flow money-flow--compact">
+                <div className="money-flow__item">
+                  <strong>Customer → Business</strong>
+                  <span>Purchase payments go to the business.</span>
+                </div>
+                <div className="money-flow__item">
+                  <strong>Business → Ambassador</strong>
+                  <span>Qualifying commissions are paid directly.</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -158,14 +250,17 @@ export function HomePage() {
       <section className="section section--tight">
         <div className="container">
           <div className="cta-band">
-            <h2>Ready to explore?</h2>
-            <p>Browse live opportunities, or create an account as a Business or Ambassador.</p>
+            <h2>Ready to grow — or ready to earn independently?</h2>
+            <p>
+              Publish a campaign as a Business, or explore opportunities as an Ambassador. Either
+              way, start with a clear commercial path.
+            </p>
             <div className="row">
-              <ButtonLink to="/discover" variant="on-dark">
-                Discover campaigns
+              <ButtonLink to="/register?role=BUSINESS" variant="on-dark">
+                Join as a Business
               </ButtonLink>
-              <ButtonLink to="/register" variant="on-dark-ghost">
-                Get started
+              <ButtonLink to="/register?role=AMBASSADOR" variant="on-dark-ghost">
+                Join as an Ambassador
               </ButtonLink>
             </div>
           </div>

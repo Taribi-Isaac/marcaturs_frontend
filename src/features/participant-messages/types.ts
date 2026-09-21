@@ -22,6 +22,9 @@ export type ChatMessage = {
   created_at: string | null
 }
 
-export type OpenConversationPayload = { ambassador_id: number } | { business_id: number }
+export type OpenConversationPayload =
+  | { ambassador_id: number }
+  | { business_id: number }
+  | { campaign_id: number }
 
 export const CHAT_MESSAGE_MAX_CHARS = 5000

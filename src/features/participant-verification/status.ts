@@ -99,7 +99,7 @@ export function requirementTypeLabel(type: RequirementType): string {
     case 'email':
       return 'Email'
     case 'phone':
-      return 'Phone'
+      return 'Phone number'
     case 'other':
       return 'Response'
     default:

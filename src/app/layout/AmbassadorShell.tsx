@@ -3,11 +3,13 @@ import { useAuth } from '@/features/auth/authContext'
 import { Button } from '@/shared/ui/Button'
 
 const ambassadorLinks = [
-  { to: '/app/ambassador', end: true, label: 'Discover' },
+  { to: '/app/ambassador', end: true, label: 'Home' },
+  { to: '/app/ambassador/discover', label: 'Discover' },
   { to: '/app/ambassador/deals', label: 'Deals' },
   { to: '/app/ambassador/earnings', label: 'Earnings' },
   { to: '/app/ambassador/messages', label: 'Messages' },
   { to: '/app/ambassador/disputes', label: 'Disputes' },
+  { to: '/app/ambassador/certification', label: 'Certification' },
   { to: '/app/ambassador/verification', label: 'Verification' },
   { to: '/app/ambassador/notifications', label: 'Notifications' },
   { to: '/app/ambassador/settings', label: 'Settings' },

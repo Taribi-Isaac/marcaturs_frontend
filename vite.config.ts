@@ -26,8 +26,8 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           configure: (proxy) => {
             proxy.on('proxyReq', (proxyReq) => {
-              proxyReq.setHeader('Origin', 'http://localhost:3000')
-              proxyReq.setHeader('Referer', 'http://localhost:3000/')
+              proxyReq.setHeader('Origin', 'http://localhost:5180')
+              proxyReq.setHeader('Referer', 'http://localhost:5180/')
             })
           },
         },
@@ -36,8 +36,8 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           configure: (proxy) => {
             proxy.on('proxyReq', (proxyReq) => {
-              proxyReq.setHeader('Origin', 'http://localhost:3000')
-              proxyReq.setHeader('Referer', 'http://localhost:3000/')
+              proxyReq.setHeader('Origin', 'http://localhost:5180')
+              proxyReq.setHeader('Referer', 'http://localhost:5180/')
             })
           },
         },

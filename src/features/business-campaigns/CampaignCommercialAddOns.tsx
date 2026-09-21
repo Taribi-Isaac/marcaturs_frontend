@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { ApiClientError } from '@/shared/api/errors'
+import { participantPaymentErrorMessage } from '@/shared/api/participantErrors'
 import { Button } from '@/shared/ui/Button'
 import { LoadingState } from '@/shared/ui/States'
 import {
@@ -53,7 +54,11 @@ export function CampaignCommercialAddOns({ campaign }: { campaign: BusinessCampa
     },
     onError: (err) => {
       setNote(null)
-      setError(err instanceof ApiClientError ? err.message : 'Could not start extension payment.')
+      setError(
+        err instanceof ApiClientError
+          ? participantPaymentErrorMessage(err)
+          : 'Could not start extension payment.',
+      )
       if (err instanceof ApiClientError && err.status === 409) {
         void queryClient.invalidateQueries({ queryKey: businessCampaignKeys.detail(campaign.id) })
       }
@@ -72,7 +77,11 @@ export function CampaignCommercialAddOns({ campaign }: { campaign: BusinessCampa
     },
     onError: (err) => {
       setNote(null)
-      setError(err instanceof ApiClientError ? err.message : 'Could not start Featured payment.')
+      setError(
+        err instanceof ApiClientError
+          ? participantPaymentErrorMessage(err)
+          : 'Could not start Featured payment.',
+      )
     },
   })
 

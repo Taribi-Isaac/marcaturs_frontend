@@ -130,11 +130,14 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .desk-header h1 {
   font-size: var(--text-h1);
   margin-bottom: var(--space-2);
+  text-wrap: balance;
 }
 
 .desk-header p {
@@ -758,8 +761,9 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-lg);
-  background: #dfe5e1;
+  background: var(--color-surface-muted);
   aspect-ratio: 4 / 5;
+  box-shadow: var(--shadow-soft);
 }
 
 .media-frame--wide {
@@ -770,6 +774,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 30%;
 }
 
 .reveal {
@@ -1095,8 +1100,9 @@
 }
 
 .chat-message--theirs .chat-message__content {
-  background: #f1efe8;
+  background: var(--color-primary-soft);
   color: var(--color-ink);
+  border: 1px solid rgb(12 92 79 / 12%);
 }
 
 .chat-message__meta {
@@ -1448,4 +1454,151 @@
 .dashboard-action p {
   margin: 0;
   color: var(--color-muted);
+}
+
+/* Ambassador Certification (MH-FE-CERT-02) */
+.certification-brand-mark {
+  display: block;
+  height: 2rem;
+  width: auto;
+  max-width: min(100%, 12.5rem);
+  margin-bottom: var(--space-3);
+  object-fit: contain;
+  object-position: left center;
+}
+
+.certification-cta {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(135deg, var(--color-primary-soft) 0%, var(--color-surface) 55%),
+    var(--color-surface);
+}
+
+.certification-cta--visual {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: stretch;
+  padding: 0;
+  overflow: hidden;
+}
+
+.certification-cta__media {
+  min-height: 11rem;
+}
+
+.certification-cta__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.certification-cta__body-wrap {
+  padding: var(--space-5);
+  display: grid;
+  gap: var(--space-3);
+  align-content: center;
+}
+
+.certification-cta--compact {
+  padding: var(--space-4);
+}
+
+.certification-cta__title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.certification-cta--compact .certification-cta__title {
+  font-size: 1.1rem;
+}
+
+.certification-cta__body {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.certification-cta__fine {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+@media (max-width: 800px) {
+  .certification-cta--visual {
+    grid-template-columns: 1fr;
+  }
+
+  .certification-cta__media {
+    min-height: 8rem;
+    max-height: 10rem;
+  }
+}
+
+.cert-row-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.cert-row {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.cert-row--actions {
+  align-items: start;
+}
+
+@media (min-width: 640px) {
+  .cert-row--actions {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
+.cert-row__meta {
+  margin: 0.35rem 0 0;
+  color: var(--color-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.cert-question legend {
+  font-weight: 600;
+  padding: 0;
+}
+
+.cert-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  max-width: 100%;
+}
+
+.cert-option span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .certification-brand-mark {
+    height: 1.75rem;
+  }
+
+  .cert-row--actions .btn {
+    width: 100%;
+  }
 }

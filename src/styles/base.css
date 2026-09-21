@@ -21,7 +21,11 @@ body {
   font-size: var(--text-body);
   line-height: var(--leading-body);
   color: var(--color-ink);
-  background: var(--color-bg);
+  background:
+    radial-gradient(1200px 480px at 12% -10%, rgb(12 92 79 / 8%), transparent 55%),
+    radial-gradient(900px 420px at 88% 0%, rgb(196 92 38 / 6%), transparent 50%),
+    linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-deep) 100%);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }

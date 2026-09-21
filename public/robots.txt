@@ -1,0 +1,17 @@
+# MarcatursHub participant SPA (MH-FE-023)
+# robots.txt is advisory only — it is not an authorization control.
+# Authenticated /app routes remain protected by Sanctum + account access.
+
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /pay/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /forbidden
+Disallow: /account-blocked
+
+# Sitemap deferred: dynamic public Campaign URLs require a dedicated public sitemap
+# endpoint or build-time generation — see frontend/docs/seo.md

@@ -12,6 +12,9 @@ export type NotificationType =
   | 'deal_cancelled'
   | 'campaign_featured_purchased'
   | 'account_status_changed'
+  | 'certification_enrollment_activated'
+  | 'certification_assessment_result'
+  | 'certification_certificate_available'
   | string
 
 export type NotificationPayload = Record<string, unknown>

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { formatDateTime } from '@/features/ambassador-deals/format'
 import { ApiClientError } from '@/shared/api/errors'
 import type { UserRole } from '@/shared/types/auth'
@@ -22,6 +23,22 @@ import type { VerificationRequirementItem } from './types'
 import { VerificationSubmissionForm } from './VerificationSubmissionForm'
 
 type ParticipantRole = Extract<UserRole, 'BUSINESS' | 'AMBASSADOR'>
+
+function verificationErrorTitle(error: unknown): string {
+  if (!(error instanceof ApiClientError)) {
+    return 'Could not load verification'
+  }
+  if (error.status === 403 && /restricted/i.test(error.message)) {
+    return 'Account restricted'
+  }
+  if (error.status === 403) {
+    return 'Verification unavailable'
+  }
+  if (error.status === 404) {
+    return 'Verification not found'
+  }
+  return 'Could not load verification'
+}
 
 function formatFileSize(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes < 0) return '—'
@@ -153,10 +170,9 @@ export function ParticipantVerificationPage({ role }: { role: ParticipantRole })
           <div>
             <h1>Verification</h1>
             <p>
-              {role === 'BUSINESS'
-                ? 'Complete Business verification so your account meets MarcatursHub trust requirements.'
-                : 'Complete Ambassador verification so your account meets MarcatursHub trust requirements.'}{' '}
-              Verification is not an endorsement or financial guarantee.
+              Submit the checklist for your {role === 'BUSINESS' ? 'Business' : 'Ambassador'}{' '}
+              account. This is separate from email verification.{' '}
+              <Link to="/faq">Learn more</Link>
             </p>
           </div>
         </header>
@@ -164,15 +180,12 @@ export function ParticipantVerificationPage({ role }: { role: ParticipantRole })
         {statusQuery.isLoading ? <LoadingState label="Loading verification…" /> : null}
 
         {statusQuery.isError ? (
-          <ErrorState
-            title={
-              statusQuery.error instanceof ApiClientError && statusQuery.error.status === 403
-                ? 'Verification unavailable'
-                : statusQuery.error instanceof ApiClientError && statusQuery.error.status === 404
-                  ? 'Verification not found'
-                  : 'Could not load verification'
-            }
-          >
+          <ErrorState title={verificationErrorTitle(statusQuery.error)}>
+            <p>
+              {statusQuery.error instanceof ApiClientError
+                ? statusQuery.error.message
+                : 'Verification could not be loaded right now.'}
+            </p>
             <Button
               type="button"
               variant="secondary"
@@ -199,7 +212,12 @@ export function ParticipantVerificationPage({ role }: { role: ParticipantRole })
                   {overallStatusLabel(overall)}
                 </span>
               </div>
-              <p className="form-section__lead">{overallStatusExplanation(overall)}</p>
+              <p className="form-section__lead">
+                {items.length === 0
+                  ? 'Requirements are not configured for your role yet. This is not a rejection.'
+                  : overallStatusExplanation(overall)}{' '}
+                {items.length === 0 ? <Link to="/faq">Learn more</Link> : null}
+              </p>
               {progress.total > 0 ? (
                 <p className="verification-overview__progress" role="status">
                   Required progress: {progress.approved} of {progress.total} approved
@@ -209,7 +227,9 @@ export function ParticipantVerificationPage({ role }: { role: ParticipantRole })
                 </p>
               ) : (
                 <p className="verification-overview__progress" role="status">
-                  There are no active required verification items for your role right now.
+                  {items.length === 0
+                    ? 'No active verification checklist items are published for your role.'
+                    : 'There are no active required verification items for your role right now.'}
                 </p>
               )}
             </section>
@@ -224,8 +244,11 @@ export function ParticipantVerificationPage({ role }: { role: ParticipantRole })
               </div>
 
               {items.length === 0 ? (
-                <EmptyState title="No active requirements">
-                  There are no active verification requirements for your account at this time.
+                <EmptyState title="No verification requirements configured">
+                  There are no active verification requirements for your role right now. Account
+                  email verification (Settings) is separate from this checklist. If you expected
+                  items here, MarcatursHub operators still need to publish requirements for your
+                  role.
                 </EmptyState>
               ) : (
                 <div className="verification-requirement-list">

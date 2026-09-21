@@ -188,9 +188,7 @@ export function BusinessDashboardPage() {
             <p className="eyebrow">Business workspace</p>
             <h1>Welcome back, {firstName}</h1>
             <p>
-              Track the moments that matter — campaign listings, Ambassador Deals, commission
-              obligations, and open cases. Desks below stay authoritative; this page points you to
-              the next action.
+              Track campaigns, Deals, commissions owed, and messages. Desks below stay authoritative.
             </p>
           </div>
           <div className="dashboard-hero__actions">
@@ -214,8 +212,8 @@ export function BusinessDashboardPage() {
               <p className="eyebrow">Verification</p>
               <h2>Complete verification to unlock the next step</h2>
               <p>
-                Submit participant-safe requirements so MarcatursHub can review your Business
-                identity. Backend rules still decide what is unlocked.
+                Participant Verification is separate from email confirmation.{' '}
+                <Link to="/faq">Learn more</Link>
               </p>
             </div>
             <ButtonLink to="/app/business/verification" variant="secondary">

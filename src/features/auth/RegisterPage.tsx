@@ -53,7 +53,8 @@ export function RegisterPage() {
       <div className="auth-panel">
         <h1>Create account</h1>
         <p className="auth-panel__lead">
-          Join as a Business publishing opportunities, or an Ambassador promoting them.
+          Join as a Business publishing opportunities, or an Ambassador promoting them. After you
+          register, verify your email before using the marketplace workspace.
         </p>
         {formError ? (
           <div className="alert alert--danger" role="alert" style={{ marginBottom: '1rem' }}>

@@ -43,6 +43,12 @@ export function notificationTypeLabel(type: NotificationType | null): string {
       return 'Featured campaign'
     case 'account_status_changed':
       return 'Account status'
+    case 'certification_enrollment_activated':
+      return 'Certification enrollment'
+    case 'certification_assessment_result':
+      return 'Assessment result'
+    case 'certification_certificate_available':
+      return 'Certification certificate'
     case 'test':
       return 'System notice'
     default:
@@ -79,6 +85,14 @@ export function notificationTitle(notification: AppNotification): string {
       return 'Featured visibility activated'
     case 'account_status_changed':
       return 'Account status updated'
+    case 'certification_enrollment_activated':
+      return 'Certification enrollment activated'
+    case 'certification_assessment_result':
+      return data.passed === true || data.result === 'passed'
+        ? 'Assessment passed'
+        : 'Assessment result available'
+    case 'certification_certificate_available':
+      return 'Certification certificate available'
     default:
       return notificationTypeLabel(notification.type)
   }
@@ -130,6 +144,24 @@ export function notificationBody(notification: AppNotification, role: UserRole):
       return `Featured visibility is now active${campaignTitle ? ` for ${campaignTitle}` : ' for your campaign'}.`
     case 'account_status_changed':
       return 'Your account status has been updated by MarcatursHub administration.'
+    case 'certification_enrollment_activated':
+      return 'Your certification enrollment is active. Continue learning from the Certification hub.'
+    case 'certification_assessment_result': {
+      const programme =
+        typeof data.programme_name === 'string' && data.programme_name.trim()
+          ? data.programme_name.trim()
+          : 'your certification programme'
+      const score =
+        data.score_percent != null && String(data.score_percent).trim() !== ''
+          ? `${String(data.score_percent)}%`
+          : null
+      if (data.passed === true || data.result === 'passed') {
+        return `You passed the assessment for ${programme}${score ? ` (${score})` : ''}. Continue to your award and certificate when available.`
+      }
+      return `Your assessment for ${programme} was not passed${score ? ` (${score})` : ''}. Review your result and retake when eligible.`
+    }
+    case 'certification_certificate_available':
+      return 'Your certification certificate PDF is available to download in your account.'
     case 'test':
       return typeof data.title === 'string' ? data.title : 'System test notification.'
     default:
@@ -171,6 +203,34 @@ export function notificationDeepLink(
 
   if (notification.type === 'account_status_changed') {
     return { to: `${base}/settings`, label: 'Open settings' }
+  }
+
+  if (
+    role === 'AMBASSADOR' &&
+    (notification.type === 'certification_enrollment_activated' ||
+      notification.type === 'certification_assessment_result' ||
+      notification.type === 'certification_certificate_available' ||
+      asPositiveInt(data.certificate_id) ||
+      asPositiveInt(data.enrollment_id) ||
+      asPositiveInt(data.award_id))
+  ) {
+    if (notification.type === 'certification_certificate_available' || asPositiveInt(data.certificate_id)) {
+      return { to: `${base}/certification/certificates`, label: 'Open certificates' }
+    }
+    const enrollmentId = asPositiveInt(data.enrollment_id)
+    if (enrollmentId && notification.type === 'certification_assessment_result') {
+      return {
+        to: `${base}/certification/enrollments/${enrollmentId}/assessment`,
+        label: 'Open assessment result',
+      }
+    }
+    if (enrollmentId) {
+      return {
+        to: `${base}/certification/enrollments/${enrollmentId}`,
+        label: 'Open learning',
+      }
+    }
+    return { to: `${base}/certification`, label: 'Open certification' }
   }
 
   if (commissionId && role === 'AMBASSADOR') {

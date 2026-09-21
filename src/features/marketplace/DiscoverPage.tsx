@@ -5,8 +5,9 @@ import { useAuth } from '@/features/auth/authContext'
 import { fetchCategories, fetchMarketplaceCampaigns } from '@/features/marketplace/api'
 import { CampaignCard } from '@/features/marketplace/CampaignCard'
 import { CampaignCoverVisual } from '@/features/marketplace/CampaignCoverVisual'
+import { images } from '@/shared/content/images'
 import { Button, ButtonLink } from '@/shared/ui/Button'
-import { EmptyState, ErrorState, LoadingState, PageMeta, SectionHeading } from '@/shared/ui/States'
+import { EmptyState, ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
 
 type Props = {
   variant?: 'public' | 'ambassador'
@@ -64,17 +65,39 @@ export function DiscoverPage({ variant = 'public' }: Props) {
     <>
       <PageMeta
         title="Discover campaigns"
-        description="Choose an offer worth selling on MarcatursHub."
+        description="Browse commission opportunities from businesses on MarcatursHub. Choose an offer worth promoting."
       />
       <section
-        className={`page-hero discover-hero${variant === 'ambassador' ? ' discover-hero--desk' : ''}`}
+        className={`discover-marketplace-hero${variant === 'ambassador' ? ' discover-marketplace-hero--desk' : ''}`}
+        aria-label="Discover marketplace"
       >
-        <div className="container">
-          <SectionHeading as="h1" eyebrow="Marketplace" title="Choose an offer worth selling.">
+        <div className="discover-marketplace-hero__media" aria-hidden>
+          <img src={images.products.src} alt="" decoding="async" />
+        </div>
+        <div className="discover-marketplace-hero__scrim" />
+        <div className="container discover-marketplace-hero__content reveal">
+          <p className="eyebrow discover-marketplace-hero__eyebrow">Marketplace</p>
+          <h1>Find an offer worth promoting.</h1>
+          <p className="discover-marketplace-hero__lead">
             {isAmbassador
-              ? 'Search live campaigns, review commission and qualification, then create a Deal when a customer is ready.'
-              : 'Browse public commission opportunities. Sign in as an Ambassador to create Deals and earn when Businesses confirm payment.'}
-          </SectionHeading>
+              ? 'Browse live campaigns, review commission terms, then create a Deal when a customer is ready.'
+              : 'Public commission opportunities from businesses seeking independent ambassadors.'}
+          </p>
+          {!isAmbassador ? (
+            <div className="row" style={{ marginTop: '1rem' }}>
+              <ButtonLink to="/register?role=AMBASSADOR" variant="on-dark">
+                Join as Ambassador
+              </ButtonLink>
+              <ButtonLink to="/login" variant="on-dark-ghost">
+                Sign in
+              </ButtonLink>
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="section section--tight">
+        <div className="container">
           <form
             className="discover-filters"
             onSubmit={(event) => {
@@ -158,9 +181,7 @@ export function DiscoverPage({ variant = 'public' }: Props) {
               Search
             </Button>
           </form>
-          <p style={{ marginTop: '1rem', color: 'var(--color-muted)', fontSize: '0.9rem' }}>
-            {list.isSuccess ? countLabel : ' '}
-          </p>
+          <p className="discover-count">{list.isSuccess ? countLabel : ' '}</p>
         </div>
       </section>
 
@@ -171,7 +192,10 @@ export function DiscoverPage({ variant = 'public' }: Props) {
               <div className="discover-featured__copy">
                 <p className="eyebrow">Featured</p>
                 <h2>Highlighted opportunities</h2>
-                <p>Businesses that invested in Featured placement — still the same Deal model.</p>
+                <p>
+                  Businesses that invested in Featured placement — same Deal model, clearer
+                  discovery.
+                </p>
               </div>
               <CampaignCoverVisual
                 cover={featured.data.items[0]?.cover_image}

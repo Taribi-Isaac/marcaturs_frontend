@@ -433,11 +433,27 @@ describe('MH-FE-P08 participant verification UX', () => {
     statusPayload = makeStatus('NOT_STARTED', [])
     renderApp('/app/business/verification')
     expect(await screen.findByText(/verification unavailable/i)).toBeInTheDocument()
+    expect(screen.getByText(/Forbidden\./i)).toBeInTheDocument()
     cleanup()
 
     statusFailure = 404
     renderApp('/app/business/verification')
     expect(await screen.findByText(/verification not found/i)).toBeInTheDocument()
+  })
+
+  it('explains empty verification requirements without saying unavailable', async () => {
+    me = ambassador
+    statusFailure = 0
+    statusPayload = makeStatus('NOT_STARTED', [])
+    renderApp('/app/ambassador/verification')
+    expect(
+      await screen.findByText(/no verification requirements configured/i),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/requirements are not configured for your role yet/i),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/submit the required items below/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/verification unavailable/i)).not.toBeInTheDocument()
   })
 
   it('does not render sensitive private fields and avoids localStorage writes', async () => {

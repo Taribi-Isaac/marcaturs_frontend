@@ -92,8 +92,9 @@ export function PublicShell() {
               MarcatursHub
             </div>
             <p className="site-footer__intro">
-              Businesses publish opportunities. Ambassadors choose what fits. Customers pay
-              businesses directly — MarcatursHub coordinates Deals, not custody.
+              More reach for businesses. More opportunities for independent ambassadors. Customers
+              pay businesses directly. MarcatursHub coordinates the commercial record, not the
+              money.
             </p>
           </div>
           <div>

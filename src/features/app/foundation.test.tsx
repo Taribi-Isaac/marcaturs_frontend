@@ -7,13 +7,22 @@ import { AppProviders } from '@/app/providers'
 import { createQueryClient } from '@/app/queryClient'
 import { AppRouter } from '@/app/router'
 
-const businessUser = {
+const businessUser: {
+  id: number
+  name: string
+  email: string
+  role: string
+  status: string
+  email_verified_at: string | null
+  last_login_at: null
+  created_at: null
+} = {
   id: 1,
   name: 'Biz User',
   email: 'biz@example.com',
   role: 'BUSINESS',
   status: 'active',
-  email_verified_at: null,
+  email_verified_at: '2026-01-01T00:00:00+00:00',
   last_login_at: null,
   created_at: null,
 }
@@ -89,8 +98,8 @@ const server = setupServer(
     }
     currentUser =
       body.role === 'BUSINESS'
-        ? { ...businessUser, name: body.name, email: body.email }
-        : { ...ambassadorUser, name: body.name, email: body.email }
+        ? { ...businessUser, name: body.name, email: body.email, email_verified_at: null }
+        : { ...ambassadorUser, name: body.name, email: body.email, email_verified_at: null }
     return HttpResponse.json({
       success: true,
       data: { user: currentUser, token: 't', token_type: 'Bearer' },
@@ -172,6 +181,22 @@ const server = setupServer(
       data: { overall_status: 'VERIFIED', requirements: [] },
     }),
   ),
+  http.get('/api/v1/conversations', () =>
+    HttpResponse.json({
+      success: true,
+      data: [],
+      meta: { pagination: { current_page: 1, last_page: 1, per_page: 20, total: 0 } },
+    }),
+  ),
+  http.get('/api/v1/ambassadors/me', () =>
+    HttpResponse.json({
+      success: true,
+      data: { certification: { is_certified: false, awards: [] } },
+    }),
+  ),
+  http.get('/api/v1/certification/enrollments', () =>
+    HttpResponse.json({ success: true, data: [] }),
+  ),
 )
 
 beforeAll(() => server.listen())
@@ -197,7 +222,7 @@ describe('public experience', () => {
     renderApp('/')
     expect(
       await screen.findByRole('heading', {
-        name: /businesses publish opportunities/i,
+        name: /more reach for businesses/i,
       }),
     ).toBeInTheDocument()
     expect(await screen.findByText(/Demo Solar Street Light Kits/i)).toBeInTheDocument()
@@ -206,7 +231,7 @@ describe('public experience', () => {
   it('routes discover and campaign detail', async () => {
     renderApp('/discover')
     expect(
-      await screen.findByRole('heading', { name: /choose an offer worth selling/i }),
+      await screen.findByRole('heading', { name: /find an offer worth promoting/i }),
     ).toBeInTheDocument()
     expect(await screen.findByText(/Demo Solar Street Light Kits/i)).toBeInTheDocument()
     const discoverCovers = screen.getAllByRole('img', {
@@ -239,7 +264,7 @@ describe('auth and role gates', () => {
     expect(await screen.findByRole('heading', { name: /welcome back, biz/i })).toBeInTheDocument()
   })
 
-  it('registers an ambassador into the ambassador shell', async () => {
+  it('registers an ambassador into the email verification gate', async () => {
     const user = userEvent.setup()
     renderApp('/register')
     await user.selectOptions(await screen.findByLabelText(/joining as/i), 'AMBASSADOR')
@@ -248,10 +273,10 @@ describe('auth and role gates', () => {
     await user.type(screen.getByLabelText(/^password$/i), 'DemoPass123!')
     await user.type(screen.getByLabelText(/confirm password/i), 'DemoPass123!')
     await user.click(screen.getByRole('button', { name: /create account/i }))
-    expect(await screen.findByLabelText(/ambassador navigation/i)).toBeInTheDocument()
     expect(
-      await screen.findByRole('heading', { name: /choose an offer worth selling/i }),
+      await screen.findByRole('heading', { name: /verify your email to continue/i }),
     ).toBeInTheDocument()
+    expect(screen.queryByLabelText(/ambassador navigation/i)).not.toBeInTheDocument()
   })
 
   it('blocks business routes for ambassadors', async () => {
