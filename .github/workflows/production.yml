@@ -1,0 +1,101 @@
+name: Production
+
+# MH-OPS-006 — Participant SPA → Cloudflare Pages (Direct Upload project).
+#
+# push to main / pull request → typecheck, lint, test, build
+# manual dispatch (deploy)    → same checks → GitHub Environment "production" approval
+#                               → production build with guarded VITE_* → wrangler pages deploy
+#
+# `develop` never deploys to production. The Pages project must use Direct Upload
+# (no Git integration) so Cloudflare cannot publish unreviewed commits.
+#
+# Environment "production" must define:
+#   secrets: CLOUDFLARE_API_TOKEN (Pages:Edit only), CLOUDFLARE_ACCOUNT_ID
+#   vars:    CF_PAGES_PROJECT, VITE_API_BASE_URL, VITE_BACKEND_ORIGIN, VITE_PUBLIC_ORIGIN,
+#            VITE_REVERB_APP_KEY, VITE_REVERB_HOST, VITE_REVERB_PORT, VITE_REVERB_SCHEME
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy this main commit to Cloudflare Pages production (requires approval)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: production-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  deploy:
+    name: Deploy to Cloudflare Pages
+    needs: ci
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+      VITE_BACKEND_ORIGIN: ${{ vars.VITE_BACKEND_ORIGIN }}
+      VITE_PUBLIC_ORIGIN: ${{ vars.VITE_PUBLIC_ORIGIN }}
+      VITE_REVERB_APP_KEY: ${{ vars.VITE_REVERB_APP_KEY }}
+      VITE_REVERB_HOST: ${{ vars.VITE_REVERB_HOST }}
+      VITE_REVERB_PORT: ${{ vars.VITE_REVERB_PORT }}
+      VITE_REVERB_SCHEME: ${{ vars.VITE_REVERB_SCHEME }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Guard production build variables
+        run: |
+          set -euo pipefail
+          fail=0
+          for name in VITE_API_BASE_URL VITE_BACKEND_ORIGIN VITE_PUBLIC_ORIGIN VITE_REVERB_APP_KEY VITE_REVERB_HOST VITE_REVERB_PORT VITE_REVERB_SCHEME; do
+            value="${!name}"
+            if [ -z "$value" ]; then echo "::error::$name is not set"; fail=1; continue; fi
+            if echo "$value" | grep -Eqi 'localhost|127\.0\.0\.1|example\.com|^http://'; then
+              echo "::error::$name must be a production HTTPS value (got $value)"; fail=1
+            fi
+          done
+          [ "$VITE_REVERB_SCHEME" = "https" ] || { echo "::error::VITE_REVERB_SCHEME must be https"; fail=1; }
+          [ "$VITE_REVERB_PORT" = "443" ] || { echo "::error::VITE_REVERB_PORT must be 443"; fail=1; }
+          exit "$fail"
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Verify bundle has no development origins
+        run: |
+          if grep -rEl 'localhost:8000|localhost:8080|127\.0\.0\.1:8000' dist; then
+            echo "::error::Production bundle references a development origin"
+            exit 1
+          fi
+
+      - name: Publish
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=${{ vars.CF_PAGES_PROJECT }} --branch=main
