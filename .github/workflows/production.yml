@@ -1,10 +1,12 @@
 name: Production
 
-# MH-OPS-006 — Participant SPA → Cloudflare Pages (Direct Upload project).
+# MH-OPS-006 / MH-OPS-010 — Participant SPA → Cloudflare Pages (Direct Upload project).
 #
-# push to main / pull request → typecheck, lint, test, build
-# manual dispatch (deploy)    → same checks → GitHub Environment "production" approval
-#                               → production build with guarded VITE_* → wrangler pages deploy
+# pull request      → checks.yml only; this workflow never runs for pull requests
+# push to main      → checks (no deploy)
+# manual dispatch   → checks → GitHub Environment "production" approval
+#                     → production build with guarded VITE_* → bundle checks
+#                     → wrangler pages deploy
 #
 # `develop` never deploys to production. The Pages project must use Direct Upload
 # (no Git integration) so Cloudflare cannot publish unreviewed commits.
@@ -13,19 +15,24 @@ name: Production
 #   secrets: CLOUDFLARE_API_TOKEN (Pages:Edit only), CLOUDFLARE_ACCOUNT_ID
 #   vars:    CF_PAGES_PROJECT, VITE_API_BASE_URL, VITE_BACKEND_ORIGIN, VITE_PUBLIC_ORIGIN,
 #            VITE_REVERB_APP_KEY, VITE_REVERB_HOST, VITE_REVERB_PORT, VITE_REVERB_SCHEME
+#
+# VITE_* values are compiled into the public bundle. VITE_REVERB_APP_KEY is the
+# backend's public REVERB_APP_KEY — never REVERB_APP_SECRET.
 
 on:
   push:
     branches: [main]
     paths-ignore:
       - "**.md"
-  pull_request:
   workflow_dispatch:
     inputs:
       deploy:
         description: "Deploy this main commit to Cloudflare Pages production (requires approval)"
         type: boolean
         default: false
+
+permissions:
+  contents: read
 
 concurrency:
   group: production-${{ github.event_name }}-${{ github.ref }}
@@ -34,18 +41,9 @@ concurrency:
 jobs:
   ci:
     name: Checks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm test
-      - run: npm run build
+    uses: ./.github/workflows/checks.yml
+    permissions:
+      contents: read
 
   deploy:
     name: Deploy to Cloudflare Pages
@@ -54,6 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     env:
+      CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
       VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
       VITE_BACKEND_ORIGIN: ${{ vars.VITE_BACKEND_ORIGIN }}
       VITE_PUBLIC_ORIGIN: ${{ vars.VITE_PUBLIC_ORIGIN }}
@@ -63,35 +62,63 @@ jobs:
       VITE_REVERB_SCHEME: ${{ vars.VITE_REVERB_SCHEME }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
 
+      - name: Require Cloudflare configuration
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          missing=0
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CF_PAGES_PROJECT; do
+            if [ -z "${!name}" ]; then echo "::error::Missing $name in environment 'production'"; missing=1; fi
+          done
+          exit "$missing"
+
+      # Values are public but are not echoed; errors name the variable only.
       - name: Guard production build variables
         run: |
           set -euo pipefail
           fail=0
-          for name in VITE_API_BASE_URL VITE_BACKEND_ORIGIN VITE_PUBLIC_ORIGIN VITE_REVERB_APP_KEY VITE_REVERB_HOST VITE_REVERB_PORT VITE_REVERB_SCHEME; do
-            value="${!name}"
-            if [ -z "$value" ]; then echo "::error::$name is not set"; fail=1; continue; fi
-            if echo "$value" | grep -Eqi 'localhost|127\.0\.0\.1|example\.com|^http://'; then
-              echo "::error::$name must be a production HTTPS value (got $value)"; fail=1
+          dev='localhost|127\.0\.0\.1|example\.(com|org|net)'
+          check() {
+            local name="$1" pattern="$2" hint="$3"
+            local value="${!name}"
+            if [[ -z "$value" ]]; then
+              echo "::error::$name is not set"; fail=1
+            elif [[ ! "$value" =~ $pattern ]] || [[ "$value" =~ $dev ]]; then
+              echo "::error::$name must be $hint"; fail=1
             fi
-          done
-          [ "$VITE_REVERB_SCHEME" = "https" ] || { echo "::error::VITE_REVERB_SCHEME must be https"; fail=1; }
+          }
+          check VITE_API_BASE_URL '^https://[A-Za-z0-9.-]+(/[A-Za-z0-9._~-]+)+$' "an absolute production https:// API URL"
+          check VITE_BACKEND_ORIGIN '^https://[A-Za-z0-9.-]+$' "a production https:// origin without a path"
+          check VITE_PUBLIC_ORIGIN '^https://[A-Za-z0-9.-]+$' "a production https:// origin without a path or trailing slash"
+          check VITE_REVERB_HOST '^[A-Za-z0-9.-]+$' "a bare production hostname"
+          check VITE_REVERB_APP_KEY '^[A-Za-z0-9_-]+$' "the public Reverb app key"
           [ "$VITE_REVERB_PORT" = "443" ] || { echo "::error::VITE_REVERB_PORT must be 443"; fail=1; }
+          [ "$VITE_REVERB_SCHEME" = "https" ] || { echo "::error::VITE_REVERB_SCHEME must be https"; fail=1; }
           exit "$fail"
 
       - run: npm ci
       - run: npm run build
 
-      - name: Verify bundle has no development origins
+      # The backend smoke test (scripts/smoke.sh) requires the participant shell to serve div#root.
+      - name: Verify production bundle
         run: |
+          set -euo pipefail
           if grep -rEl 'localhost:8000|localhost:8080|127\.0\.0\.1:8000' dist; then
             echo "::error::Production bundle references a development origin"
             exit 1
           fi
+          grep -q '<div id="root"' dist/index.html || { echo "::error::dist/index.html has no div#root"; exit 1; }
+          for name in VITE_API_BASE_URL VITE_REVERB_HOST VITE_REVERB_APP_KEY; do
+            grep -rqF -- "${!name}" dist/assets || { echo "::error::Bundle does not contain $name"; exit 1; }
+          done
 
       - name: Publish
         uses: cloudflare/wrangler-action@v3
