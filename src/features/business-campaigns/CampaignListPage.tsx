@@ -136,6 +136,7 @@ export function CampaignListPage() {
                         className="campaign-row__thumb"
                         imgClassName="campaign-row__thumb-img"
                         fallbackClassName="campaign-cover__fallback campaign-cover__fallback--thumb"
+                        authenticated
                       />
                       <div className="campaign-row__content">
                         <div className="campaign-row__top">

@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import type { CampaignCoverImage } from '@/features/marketplace/cover'
-import { campaignCoverAlt, coverImageSrc } from '@/features/marketplace/cover'
+import { campaignCoverAlt, coverImageSrc, coverVersion } from '@/features/marketplace/cover'
+import { useAuthenticatedCoverSrc } from '@/features/marketplace/useAuthenticatedCoverSrc'
 
 type Props = {
   cover: CampaignCoverImage | null | undefined
@@ -10,6 +12,8 @@ type Props = {
   fallbackClassName?: string
   /** When true, cover images get a meaningful alt (cards/hero). List thumbs stay decorative. */
   meaningful?: boolean
+  /** Owner-only cover URLs (Business desk) are loaded with the session instead of a plain <img>. */
+  authenticated?: boolean
 }
 
 export function CampaignCoverVisual({
@@ -20,8 +24,14 @@ export function CampaignCoverVisual({
   imgClassName = 'campaign-cover__img',
   fallbackClassName = 'campaign-cover__fallback',
   meaningful = false,
+  authenticated = false,
 }: Props) {
-  const src = cover?.available ? coverImageSrc(cover.url) : null
+  const resolved = cover?.available ? coverImageSrc(cover.url) : null
+  const owner = useAuthenticatedCoverSrc(authenticated ? resolved : null, coverVersion(cover))
+  const candidate = authenticated ? owner.src : resolved
+  // Remember the URL that failed so a broken image falls back once, without retrying.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const src = candidate && candidate !== failedSrc ? candidate : null
   const label = categoryName?.trim() || 'Campaign'
   const available = Boolean(src)
 
@@ -34,6 +44,7 @@ export function CampaignCoverVisual({
           className={imgClassName}
           loading="lazy"
           decoding="async"
+          onError={() => setFailedSrc(src)}
         />
       </div>
     )
