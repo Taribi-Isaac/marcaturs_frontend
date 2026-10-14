@@ -6,6 +6,12 @@ import { CampaignCoverPanel } from '@/features/business-campaigns/CampaignCoverP
 import { CampaignCoverVisual } from '@/features/marketplace/CampaignCoverVisual'
 import { coverImageSrc, type CampaignCoverImage } from '@/features/marketplace/cover'
 import { toAbsolutePublicUrl } from '@/shared/seo/publicOrigin'
+import {
+  installIntersectionObserver,
+  observedElements,
+  observerRootMargins,
+  scrollIntoView,
+} from '@/test/intersectionObserver'
 
 const PROD_API = 'https://api.marcaturshub.com.ng/api/v1'
 const PUBLIC_COVER = 'https://api.marcaturshub.com.ng/api/v1/marketplace/campaigns/7/cover'
@@ -40,7 +46,12 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
+
+function requestedUrls() {
+  return fetchSpy.mock.calls.map(([input]) => String(input))
+}
 
 describe('coverImageSrc', () => {
   it('keeps absolute cover URLs on the API host when the API base is absolute', () => {
@@ -179,6 +190,201 @@ describe('CampaignCoverVisual', () => {
 
     expect(container.querySelector('img')).toHaveAttribute('src', 'blob:cover-1')
     expect(createObjectURL).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('CampaignCoverVisual owner covers near the viewport', () => {
+  beforeEach(() => {
+    installIntersectionObserver()
+  })
+
+  function ownerThumb(id: number, title = `Campaign ${id}`) {
+    return (
+      <CampaignCoverVisual
+        cover={ownerCover(id)}
+        title={title}
+        categoryName={`Category ${id}`}
+        className="thumb"
+        authenticated
+      />
+    )
+  }
+
+  it('does not download an off-screen cover until it approaches the viewport', async () => {
+    fetchSpy.mockResolvedValue(imageResponse())
+    const { container } = render(ownerThumb(9))
+    const thumb = container.querySelector('.thumb')!
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+    expect(container.querySelector('img')).toBeNull()
+    expect(observedElements()).toEqual([thumb])
+    expect(observerRootMargins()).toEqual(['200px 0px'])
+
+    scrollIntoView(thumb)
+
+    await waitFor(() => {
+      expect(container.querySelector('img')).toHaveAttribute('src', 'blob:cover-1')
+    })
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/v1/campaigns/9/cover/download',
+      expect.objectContaining({ credentials: 'include' }),
+    )
+    expect(observedElements()).toEqual([])
+  })
+
+  it('requests each cover once, as rows scroll into view', async () => {
+    fetchSpy.mockImplementation(() => Promise.resolve(imageResponse()))
+    const rows = () => [1, 2, 3].map((id) => <div key={id}>{ownerThumb(id)}</div>)
+    const { container, rerender } = render(<>{rows()}</>)
+    const thumbs = [...container.querySelectorAll('.thumb')]
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+
+    scrollIntoView(thumbs[0]!)
+    scrollIntoView(thumbs[2]!)
+    await waitFor(() => expect(container.querySelectorAll('img')).toHaveLength(2))
+    expect(requestedUrls()).toEqual([
+      '/api/v1/campaigns/1/cover/download',
+      '/api/v1/campaigns/3/cover/download',
+    ])
+
+    scrollIntoView(thumbs[0]!)
+    rerender(<>{rows()}</>)
+    expect(fetchSpy).toHaveBeenCalledTimes(2)
+
+    scrollIntoView(thumbs[1]!)
+    await waitFor(() => expect(container.querySelectorAll('img')).toHaveLength(3))
+    expect(requestedUrls()).toEqual([
+      '/api/v1/campaigns/1/cover/download',
+      '/api/v1/campaigns/3/cover/download',
+      '/api/v1/campaigns/2/cover/download',
+    ])
+  })
+
+  it('cleans up observers, in-flight requests and object URLs on unmount', async () => {
+    const signals = new Map<string, AbortSignal>()
+    fetchSpy.mockImplementation((input, init) => {
+      signals.set(String(input), init!.signal!)
+      return String(input).includes('/2/')
+        ? new Promise<Response>(() => undefined)
+        : Promise.resolve(imageResponse())
+    })
+    const { container, unmount } = render(
+      <>
+        {[1, 2, 3].map((id) => (
+          <div key={id}>{ownerThumb(id)}</div>
+        ))}
+      </>,
+    )
+    const thumbs = [...container.querySelectorAll('.thumb')]
+
+    scrollIntoView(thumbs[0]!)
+    scrollIntoView(thumbs[1]!)
+    await waitFor(() =>
+      expect(container.querySelector('img')).toHaveAttribute('src', 'blob:cover-1'),
+    )
+    expect(observedElements()).toEqual([thumbs[2]])
+
+    unmount()
+
+    expect(observedElements()).toEqual([])
+    expect(signals.get('/api/v1/campaigns/2/cover/download')!.aborted).toBe(true)
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:cover-1')
+    expect(requestedUrls()).not.toContain('/api/v1/campaigns/3/cover/download')
+  })
+
+  it('shows the newer campaign when a row changes before an older response arrives', async () => {
+    const resolvers = new Map<string, (response: Response) => void>()
+    fetchSpy.mockImplementation(
+      (input) => new Promise<Response>((resolve) => resolvers.set(String(input), resolve)),
+    )
+    const { container, rerender } = render(ownerThumb(1, 'Row'))
+    scrollIntoView(container.querySelector('.thumb')!)
+    await waitFor(() => expect(resolvers.size).toBe(1))
+
+    rerender(ownerThumb(2, 'Row'))
+    await waitFor(() => expect(resolvers.size).toBe(2))
+
+    resolvers.get('/api/v1/campaigns/2/cover/download')!(imageResponse())
+    await waitFor(() =>
+      expect(container.querySelector('img')).toHaveAttribute('src', 'blob:cover-1'),
+    )
+    resolvers.get('/api/v1/campaigns/1/cover/download')!(imageResponse())
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(container.querySelector('img')).toHaveAttribute('src', 'blob:cover-1')
+    expect(createObjectURL).toHaveBeenCalledTimes(1)
+  })
+
+  it('revokes the previous cover when a visible row switches campaigns', async () => {
+    fetchSpy.mockImplementation(() => Promise.resolve(imageResponse()))
+    const { container, rerender } = render(ownerThumb(1, 'Row'))
+    scrollIntoView(container.querySelector('.thumb')!)
+    await waitFor(() =>
+      expect(container.querySelector('img')).toHaveAttribute('src', 'blob:cover-1'),
+    )
+
+    rerender(ownerThumb(2, 'Row'))
+
+    await waitFor(() =>
+      expect(container.querySelector('img')).toHaveAttribute('src', 'blob:cover-2'),
+    )
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:cover-1')
+    expect(requestedUrls()).toEqual([
+      '/api/v1/campaigns/1/cover/download',
+      '/api/v1/campaigns/2/cover/download',
+    ])
+  })
+
+  it('keeps the placeholder when a visible cover fails or is not an image', async () => {
+    fetchSpy.mockImplementation((input) =>
+      Promise.resolve(
+        String(input).includes('/1/')
+          ? imageResponse('application/json', 500)
+          : imageResponse('text/html'),
+      ),
+    )
+    const { container } = render(
+      <>
+        {[1, 2].map((id) => (
+          <div key={id}>{ownerThumb(id)}</div>
+        ))}
+      </>,
+    )
+    const thumbs = [...container.querySelectorAll('.thumb')]
+
+    scrollIntoView(thumbs[0]!)
+    scrollIntoView(thumbs[1]!)
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(container.querySelector('img')).toBeNull()
+    expect(screen.getByText('Category 1')).toBeInTheDocument()
+    expect(screen.getByText('Category 2')).toBeInTheDocument()
+    expect(createObjectURL).not.toHaveBeenCalled()
+  })
+
+  it('loads immediately when IntersectionObserver is unavailable', async () => {
+    vi.stubGlobal('IntersectionObserver', undefined)
+    fetchSpy.mockResolvedValue(imageResponse())
+    const { container } = render(ownerThumb(9))
+
+    await waitFor(() => {
+      expect(container.querySelector('img')).toHaveAttribute('src', 'blob:cover-1')
+    })
+    expect(requestedUrls()).toEqual(['/api/v1/campaigns/9/cover/download'])
+  })
+
+  it('leaves public covers to the browser without observing them', () => {
+    render(<CampaignCoverVisual cover={{ available: true, url: PUBLIC_COVER }} title="Solar" />)
+
+    expect(observedElements()).toEqual([])
+    expect(fetchSpy).not.toHaveBeenCalled()
+    expect(screen.getByRole('presentation')).toHaveAttribute(
+      'src',
+      '/api/v1/marketplace/campaigns/7/cover',
+    )
   })
 })
 
