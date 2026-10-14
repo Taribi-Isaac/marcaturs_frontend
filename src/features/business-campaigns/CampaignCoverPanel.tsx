@@ -5,8 +5,10 @@ import {
   CAMPAIGN_COVER_FORMAT_HINT,
   CAMPAIGN_COVER_MAX_KB_HINT,
   coverImageSrc,
+  coverVersion,
   type CampaignCoverImage,
 } from '@/features/marketplace/cover'
+import { useAuthenticatedCoverSrc } from '@/features/marketplace/useAuthenticatedCoverSrc'
 import { ApiClientError } from '@/shared/api/errors'
 import { Button } from '@/shared/ui/Button'
 import { deleteCampaignCover, uploadCampaignCover } from './api'
@@ -28,8 +30,20 @@ export function CampaignCoverPanel({ campaignId, title, cover, canMutate = true 
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
 
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+
   const available = Boolean(cover?.available && cover.url)
-  const previewSrc = localPreview || (available ? coverImageSrc(cover?.url) : null)
+  const stored = useAuthenticatedCoverSrc(
+    available ? coverImageSrc(cover?.url) : null,
+    coverVersion(cover),
+  )
+  const shownSrc = localPreview || stored.src
+  const previewSrc = shownSrc && shownSrc !== failedSrc ? shownSrc : null
+  const fallbackKicker = !available
+    ? 'No cover yet'
+    : stored.status === 'loading'
+      ? 'Loading cover…'
+      : 'Cover preview unavailable'
 
   async function refreshCampaign() {
     await queryClient.invalidateQueries({ queryKey: businessCampaignKeys.detail(campaignId) })
@@ -141,10 +155,11 @@ export function CampaignCoverPanel({ campaignId, title, cover, canMutate = true 
             src={previewSrc}
             alt={`Cover preview for ${title}`}
             className="campaign-cover-panel__img"
+            onError={() => setFailedSrc(previewSrc)}
           />
         ) : (
           <div className="campaign-cover__fallback campaign-cover__fallback--panel" aria-hidden>
-            <span className="campaign-cover__fallback-kicker">No cover yet</span>
+            <span className="campaign-cover__fallback-kicker">{fallbackKicker}</span>
             <span className="campaign-cover__fallback-title">{title}</span>
           </div>
         )}
