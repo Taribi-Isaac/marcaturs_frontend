@@ -1,6 +1,8 @@
-name: Staging build
+name: Future S3 staging build (deferred)
 
 # ENG-040 — build Participant SPA for staging. Upload to S3 requires AWS (gated).
+# DEFERRED (MH-OPS-006): SPAs are hosted on Cloudflare Pages (production.yml).
+# S3 + CloudFront hosting is a future-scale option only. Manual dispatch only.
 
 on:
   workflow_dispatch:
@@ -9,10 +11,6 @@ on:
         description: "Sync dist to staging S3 (requires AWS)"
         type: boolean
         default: false
-  push:
-    branches: [main, master]
-    paths-ignore:
-      - "**.md"
 
 jobs:
   build:
