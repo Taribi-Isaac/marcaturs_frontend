@@ -474,6 +474,12 @@ describe('Business campaigns desk', () => {
     campaigns = [campaign]
     versionsByCampaign[55] = []
     window.confirm = () => true
+    server.use(
+      http.get(
+        '/api/v1/campaigns/:id/cover/download',
+        () => new HttpResponse('cover-bytes', { headers: { 'Content-Type': 'image/jpeg' } }),
+      ),
+    )
 
     renderApp('/app/business/campaigns/55')
     expect(await screen.findByRole('heading', { name: 'Submit Me' })).toBeInTheDocument()
@@ -550,11 +556,17 @@ describe('Business campaigns desk', () => {
         },
       }),
     ]
+    server.use(
+      http.get(
+        '/api/v1/campaigns/:id/cover/download',
+        () => new HttpResponse('old-cover', { headers: { 'Content-Type': 'image/jpeg' } }),
+      ),
+    )
 
     renderApp('/app/business/campaigns/88')
     expect(await screen.findByRole('heading', { name: 'Campaign Cover' })).toBeInTheDocument()
     expect(
-      screen.getByRole('img', { name: /Cover preview for Covered Offer/i }),
+      await screen.findByRole('img', { name: /Cover preview for Covered Offer/i }),
     ).toBeInTheDocument()
 
     const file = new File(['new-cover'], 'new.png', { type: 'image/png' })
