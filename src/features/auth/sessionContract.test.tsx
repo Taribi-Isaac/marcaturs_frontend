@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { setupServer } from 'msw/node'
@@ -230,8 +230,16 @@ describe('participant session authentication contract', () => {
       await user.type(screen.getByLabelText(/confirm password/i), 'DemoPass123!')
       await user.click(screen.getByRole('button', { name: /create account/i }))
 
+      // GuestOnly briefly renders the gate inside the public shell before the workspace
+      // route commits, so wait for the workspace route's gate rather than the first heading.
+      await waitFor(() => {
+        expect(window.location.pathname).toBe(
+          role === 'BUSINESS' ? '/app/business' : '/app/ambassador',
+        )
+        expect(screen.queryByRole('navigation', { name: /primary/i })).not.toBeInTheDocument()
+      })
       expect(
-        await screen.findByRole('heading', { name: /verify your email to continue/i }),
+        screen.getByRole('heading', { name: /verify your email to continue/i }),
       ).toBeInTheDocument()
       expect(screen.queryByLabelText(/business navigation/i)).not.toBeInTheDocument()
       expect(screen.queryByLabelText(/ambassador navigation/i)).not.toBeInTheDocument()
