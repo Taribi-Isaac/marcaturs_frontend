@@ -6,9 +6,10 @@ Authoritative backend policy: [`backend/docs/authentication-token-policy.md`](..
 
 Summary for SPA engineers:
 
-- First-party auth is **Sanctum cookie session + CSRF** (`credentials: 'include'`). Do not rely on storing the login response Bearer PAT in `localStorage`.
-- **PAT lifetime** (when Bearer is used) = **7 days** (`SANCTUM_TOKEN_EXPIRATION_MINUTES=10080`).
-- Login/register revoke prior PATs and issue one new `auth` PAT.
+- First-party auth is **Sanctum cookie session + CSRF** (`credentials: 'include'`). The session cookie is the only browser credential: never store a token or send an `Authorization` header.
+- Browser (stateful) `POST /auth/login` and `POST /auth/register` return `{ user }` only — no `token` / `token_type` (MH-SEC-001). `/auth/me` remains the session authority after login/register.
+- **PAT lifetime** (non-browser API clients using Bearer) = **7 days** (`SANCTUM_TOKEN_EXPIRATION_MINUTES=10080`).
+- Login/register revoke the user's prior PATs; a new `auth` PAT is issued only to non-browser clients.
 - Change password keeps the **current** session/token and revokes other PATs.
 - Password reset revokes all PATs and clears the user’s database `sessions` rows.
 - `401` → treat as logged out; `403` → do **not** force logout.
