@@ -28,8 +28,10 @@ export type RegisterPayload = {
   role: 'BUSINESS' | 'AMBASSADOR'
 }
 
+/**
+ * Browser login/register authenticate through the Sanctum session cookie; the
+ * API does not issue a personal access token to the SPA, so there is no `token`.
+ */
 export type AuthSessionResult = {
   user: AuthUser
-  token: string
-  token_type: 'Bearer'
 }

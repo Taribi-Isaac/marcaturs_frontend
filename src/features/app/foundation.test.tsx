@@ -87,7 +87,7 @@ const server = setupServer(
     else currentUser = ambassadorUser
     return HttpResponse.json({
       success: true,
-      data: { user: currentUser, token: 't', token_type: 'Bearer' },
+      data: { user: currentUser },
     })
   }),
   http.post('/api/v1/auth/register', async ({ request }) => {
@@ -102,7 +102,7 @@ const server = setupServer(
         : { ...ambassadorUser, name: body.name, email: body.email, email_verified_at: null }
     return HttpResponse.json({
       success: true,
-      data: { user: currentUser, token: 't', token_type: 'Bearer' },
+      data: { user: currentUser },
     })
   }),
   http.post('/api/v1/auth/logout', () => {
