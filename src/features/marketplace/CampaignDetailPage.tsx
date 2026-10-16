@@ -1,12 +1,16 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AmbassadorResourceImage } from '@/features/ambassador-deals/AmbassadorResourceImage'
+import { marketplaceResourceDownloadUrl } from '@/features/ambassador-deals/api'
 import { campaignAllowsNewDeals } from '@/features/ambassador-deals/helpers'
 import { useAuth } from '@/features/auth/authContext'
 import { CampaignCoverVisual } from '@/features/marketplace/CampaignCoverVisual'
 import { fetchMarketplaceCampaign } from '@/features/marketplace/api'
 import { businessDisplayName, formatCommission, formatMoney } from '@/features/marketplace/format'
+import type { MarketplaceMarketingResource } from '@/features/marketplace/types'
 import { openConversation } from '@/features/participant-messages/api'
+import { downloadAuthenticatedFile } from '@/shared/api/download'
 import { ApiClientError } from '@/shared/api/errors'
 import { Button, ButtonLink } from '@/shared/ui/Button'
 import { ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
@@ -20,6 +24,47 @@ function Block({ title, body }: { title: string; body?: string | null }) {
       <h3>{title}</h3>
       <p style={{ whiteSpace: 'pre-wrap' }}>{body}</p>
     </div>
+  )
+}
+
+function AmbassadorResourceDownload({
+  campaignId,
+  resource,
+}: {
+  campaignId: number
+  resource: MarketplaceMarketingResource
+}) {
+  const [error, setError] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
+  const label = resource.title || resource.type || 'resource'
+
+  return (
+    <span className="resource-meta-list__actions">
+      <Button
+        type="button"
+        size="sm"
+        variant="secondary"
+        disabled={pending}
+        aria-label={`Download ${label}`}
+        onClick={() => {
+          setError(null)
+          setPending(true)
+          void downloadAuthenticatedFile(
+            marketplaceResourceDownloadUrl(campaignId, resource.id),
+            resource.original_filename || `${label}.bin`,
+          )
+            .catch(() => setError('Download failed.'))
+            .finally(() => setPending(false))
+        }}
+      >
+        {pending ? 'Downloading…' : 'Download'}
+      </Button>
+      {error ? (
+        <span className="campaign-row__meta" role="alert">
+          {error}
+        </span>
+      ) : null}
+    </span>
   )
 }
 
@@ -191,9 +236,12 @@ export function CampaignDetailPage() {
                 </p>
                 <ul className="resource-meta-list">
                   {campaign.marketing_resources.map((resource) => (
-                    <li key={resource.id}>
-                      <strong>{resource.title || resource.type}</strong>
-                      <span className="campaign-row__meta"> · {resource.type}</span>
+                    <li key={resource.id} className="resource-meta-list__item">
+                      <div>
+                        <strong>{resource.title || resource.type}</strong>
+                        <span className="campaign-row__meta"> · {resource.type}</span>
+                      </div>
+                      <AmbassadorResourceDownload campaignId={campaign.id} resource={resource} />
                     </li>
                   ))}
                 </ul>
