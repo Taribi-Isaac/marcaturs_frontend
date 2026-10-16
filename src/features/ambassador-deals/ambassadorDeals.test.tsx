@@ -664,4 +664,40 @@ describe('MH-FE-P03 ambassador commercial journey', () => {
     expect(screen.queryByText('0123456789')).not.toBeInTheDocument()
     expect(screen.queryByText(/storage/i)).not.toBeInTheDocument()
   })
+
+  it('lets ambassadors download campaign marketing resources without exposing storage paths', async () => {
+    me = ambassador
+    const user = userEvent.setup()
+    let downloadRequested = false
+    server.use(
+      http.get('/api/v1/marketplace/campaigns/:id/resources/:resourceId/download', ({ params }) => {
+        downloadRequested = true
+        expect(Number(params.id)).toBe(82)
+        expect(Number(params.resourceId)).toBe(501)
+        return new HttpResponse(Uint8Array.from([1, 2, 3, 4]), {
+          status: 200,
+          headers: {
+            'Content-Type': 'image/jpeg',
+            'Content-Disposition': 'attachment; filename="hero-flyer.jpg"',
+          },
+        })
+      }),
+    )
+
+    renderApp('/campaigns/82')
+    expect(await screen.findByRole('heading', { name: /campaign resources/i })).toBeInTheDocument()
+    expect(screen.getByText(/hero flyer/i)).toBeInTheDocument()
+    expect(screen.queryByText(/storage\//i)).not.toBeInTheDocument()
+
+    const download = await screen.findByRole('button', { name: /download hero flyer/i })
+    await user.click(download)
+    await waitFor(() => expect(downloadRequested).toBe(true))
+  })
+
+  it('hides campaign marketing resource downloads from guests', async () => {
+    renderApp('/campaigns/82')
+    await screen.findByRole('heading', { name: /demo solar street light kits/i })
+    expect(screen.queryByRole('heading', { name: /campaign resources/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /download/i })).not.toBeInTheDocument()
+  })
 })

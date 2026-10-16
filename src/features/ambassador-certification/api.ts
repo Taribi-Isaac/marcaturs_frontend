@@ -1,6 +1,6 @@
 import { appConfig } from '@/app/config/env'
 import { apiRequest } from '@/shared/api/client'
-import { ensureCsrfCookie, readXsrfToken } from '@/shared/api/csrf'
+import { downloadAuthenticatedFile } from '@/shared/api/download'
 import type {
   AssessmentAttempt,
   CertificationCertificate,
@@ -10,6 +10,8 @@ import type {
   LearnerAssessment,
   PurchaseInitializeResult,
 } from './types'
+
+export { downloadAuthenticatedFile }
 
 export async function fetchProgrammes(signal?: AbortSignal) {
   return apiRequest<CertificationProgramme[]>('/certification/programmes', { signal })
@@ -114,41 +116,6 @@ export async function fetchCertificate(certificateId: number, signal?: AbortSign
 
 export function certificateDownloadUrl(certificateId: number) {
   return `${appConfig.apiBaseUrl}/certification/certificates/${certificateId}/download`
-}
-
-/** Authenticated blob download — never exposes storage keys. */
-export async function downloadAuthenticatedFile(url: string, fallbackName: string) {
-  await ensureCsrfCookie()
-  const headers: Record<string, string> = {
-    Accept: '*/*',
-    'X-Requested-With': 'XMLHttpRequest',
-  }
-  const xsrf = readXsrfToken()
-  if (xsrf) headers['X-XSRF-TOKEN'] = xsrf
-
-  const response = await fetch(url, { credentials: 'include', headers })
-  if (!response.ok) {
-    const err = new Error(
-      response.status === 409
-        ? 'The certificate file is not ready yet. Please try again shortly.'
-        : 'Download failed.',
-    )
-    ;(err as Error & { status?: number }).status = response.status
-    throw err
-  }
-
-  const blob = await response.blob()
-  const disposition = response.headers.get('Content-Disposition')
-  const match = disposition?.match(/filename="?([^"]+)"?/i)
-  const filename = match?.[1] || fallbackName
-  const objectUrl = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = objectUrl
-  anchor.download = filename
-  document.body.appendChild(anchor)
-  anchor.click()
-  anchor.remove()
-  URL.revokeObjectURL(objectUrl)
 }
 
 export const PURCHASE_REFERENCE_KEY = 'mh_cert_purchase_reference'

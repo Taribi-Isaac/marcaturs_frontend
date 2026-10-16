@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
+import { companySocialLinks } from '@/app/config/socialLinks'
 import { useAuth } from '@/features/auth/authContext'
 import { Button } from '@/shared/ui/Button'
 
@@ -15,6 +16,38 @@ export function PublicShell() {
   const [open, setOpen] = useState(false)
   const authenticated = status === 'authenticated' || status === 'restricted'
 
+  const authActions =
+    authenticated && user ? (
+      <>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setOpen(false)
+            void logout()
+          }}
+        >
+          Sign out
+        </Button>
+        <Link
+          className="btn btn--primary btn--sm"
+          to={user.role === 'BUSINESS' ? '/app/business' : '/app/ambassador'}
+          onClick={() => setOpen(false)}
+        >
+          Open app
+        </Link>
+      </>
+    ) : (
+      <>
+        <Link className="btn btn--ghost btn--sm" to="/login" onClick={() => setOpen(false)}>
+          Sign in
+        </Link>
+        <Link className="btn btn--primary btn--sm" to="/register" onClick={() => setOpen(false)}>
+          Get started
+        </Link>
+      </>
+    )
+
   return (
     <>
       <a className="skip-link" href="#main">
@@ -28,7 +61,7 @@ export function PublicShell() {
             </span>
             MarcatursHub
           </Link>
-          <nav aria-label="Primary">
+          <nav className="site-header__nav" aria-label="Primary">
             <ul className="nav-links">
               {publicLinks.map((link) => (
                 <li key={link.to}>
@@ -40,28 +73,7 @@ export function PublicShell() {
             </ul>
           </nav>
           <div className="nav-actions">
-            {authenticated && user ? (
-              <>
-                <Button variant="ghost" size="sm" onClick={() => void logout()}>
-                  Sign out
-                </Button>
-                <Link
-                  className="btn btn--primary btn--sm"
-                  to={user.role === 'BUSINESS' ? '/app/business' : '/app/ambassador'}
-                >
-                  Open app
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link className="btn btn--ghost btn--sm" to="/login">
-                  Sign in
-                </Link>
-                <Link className="btn btn--primary btn--sm" to="/register">
-                  Get started
-                </Link>
-              </>
-            )}
+            <div className="nav-actions__auth">{authActions}</div>
             <button
               type="button"
               className="mobile-nav-toggle"
@@ -69,7 +81,8 @@ export function PublicShell() {
               aria-controls="mobile-nav"
               onClick={() => setOpen((v) => !v)}
             >
-              <span className="visually-hidden">Menu</span>☰
+              <span className="visually-hidden">Menu</span>
+              <span aria-hidden="true">☰</span>
             </button>
           </div>
         </div>
@@ -79,6 +92,7 @@ export function PublicShell() {
               {link.label}
             </NavLink>
           ))}
+          <div className="mobile-drawer__actions">{authActions}</div>
         </div>
       </header>
       <main id="main">
@@ -140,6 +154,32 @@ export function PublicShell() {
               <li>
                 <Link to="/privacy">Privacy</Link>
               </li>
+            </ul>
+          </div>
+          <div>
+            <h3>Follow</h3>
+            <ul className="site-footer__social">
+              {companySocialLinks.map((network) => (
+                <li key={network.id}>
+                  {network.href ? (
+                    <a
+                      href={network.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${network.label} (opens in a new tab)`}
+                    >
+                      {network.label}
+                    </a>
+                  ) : (
+                    <span
+                      className="site-footer__social-pending"
+                      aria-label={`${network.label} (link destination awaiting confirmation)`}
+                    >
+                      {network.label}
+                    </span>
+                  )}
+                </li>
+              ))}
             </ul>
           </div>
         </div>
