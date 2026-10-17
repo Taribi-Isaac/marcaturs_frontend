@@ -49,6 +49,21 @@ export function fieldErrorsFromApi(error: unknown): Record<string, string> {
   return out
 }
 
+/**
+ * An unassignable category is rejected as a 422 business_validation without field details;
+ * surface it against the Category field instead of only as a form-level message.
+ */
+export function categoryErrorFromApi(error: unknown): string | null {
+  if (
+    error instanceof ApiClientError &&
+    error.code === 'business_validation' &&
+    /\bcategory\b/i.test(error.message)
+  ) {
+    return error.message
+  }
+  return null
+}
+
 export function emptyToNull(value: string | undefined | null): string | null {
   if (value === undefined || value === null) return null
   const trimmed = value.trim()

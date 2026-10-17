@@ -8,7 +8,7 @@ import { ApiClientError } from '@/shared/api/errors'
 import { Button, ButtonLink } from '@/shared/ui/Button'
 import { ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
 import { createCampaign, fetchCategories } from './api'
-import { fieldErrorsFromApi } from './format'
+import { categoryErrorFromApi, fieldErrorsFromApi } from './format'
 import { businessCampaignKeys } from './queryKeys'
 
 const schema = z.object({
@@ -37,17 +37,24 @@ export function CampaignCreatePage() {
     mutationFn: createCampaign,
     onSuccess: async (campaign) => {
       await queryClient.invalidateQueries({ queryKey: businessCampaignKeys.list() })
-      navigate(`/app/business/campaigns/${campaign.id}`, { replace: true })
+      navigate(`/app/business/campaigns/${campaign.id}?tab=version`, {
+        replace: true,
+        state: { created: true },
+      })
     },
     onError: (error) => {
       if (error instanceof ApiClientError) {
-        setFormError(error.message)
         const fields = fieldErrorsFromApi(error)
+        const categoryMessage = categoryErrorFromApi(error)
+        if (categoryMessage) fields.category_id = categoryMessage
+        let mapped = 0
         for (const [key, message] of Object.entries(fields)) {
           if (key === 'title' || key === 'category_id') {
             form.setError(key, { message })
+            mapped += 1
           }
         }
+        setFormError(mapped > 0 ? null : error.message)
       } else {
         setFormError('Could not create campaign.')
       }
@@ -91,16 +98,30 @@ export function CampaignCreatePage() {
                 {formError}
               </div>
             ) : null}
-            <div className="field">
+            <div className={`field${form.formState.errors.title ? ' field--invalid' : ''}`}>
               <label htmlFor="campaign-title">Campaign title</label>
-              <input id="campaign-title" {...form.register('title')} />
+              <input
+                id="campaign-title"
+                aria-invalid={form.formState.errors.title ? true : undefined}
+                aria-describedby={form.formState.errors.title ? 'campaign-title-error' : undefined}
+                {...form.register('title')}
+              />
               {form.formState.errors.title ? (
-                <p className="field__error">{form.formState.errors.title.message}</p>
+                <p id="campaign-title-error" className="field__error">
+                  {form.formState.errors.title.message}
+                </p>
               ) : null}
             </div>
-            <div className="field">
+            <div className={`field${form.formState.errors.category_id ? ' field--invalid' : ''}`}>
               <label htmlFor="campaign-category">Category</label>
-              <select id="campaign-category" {...form.register('category_id')}>
+              <select
+                id="campaign-category"
+                aria-invalid={form.formState.errors.category_id ? true : undefined}
+                aria-describedby={
+                  form.formState.errors.category_id ? 'campaign-category-error' : undefined
+                }
+                {...form.register('category_id')}
+              >
                 <option value={0}>Select a category</option>
                 {assignable.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -109,7 +130,9 @@ export function CampaignCreatePage() {
                 ))}
               </select>
               {form.formState.errors.category_id ? (
-                <p className="field__error">{form.formState.errors.category_id.message}</p>
+                <p id="campaign-category-error" className="field__error">
+                  {form.formState.errors.category_id.message}
+                </p>
               ) : null}
             </div>
             <div className="action-bar">
