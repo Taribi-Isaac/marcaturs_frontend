@@ -6,6 +6,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { GuestOnly } from '@/features/auth/RequireAuth'
 import { useAuth } from '@/features/auth/authContext'
 import { homePathForRole } from '@/features/auth/authHelpers'
+import { registerFieldErrorsFromApi } from '@/features/auth/registerFieldErrors'
 import { ApiClientError } from '@/shared/api/errors'
 import { Button } from '@/shared/ui/Button'
 import { PageMeta } from '@/shared/ui/States'
@@ -70,7 +71,16 @@ export function RegisterPage() {
               navigate(homePathForRole(user.role), { replace: true })
             } catch (error) {
               if (error instanceof ApiClientError) {
-                setFormError(error.message)
+                const fields = registerFieldErrorsFromApi(error)
+                const entries = Object.entries(fields) as [keyof FormValues, string][]
+                if (entries.length > 0) {
+                  entries.forEach(([key, message], index) => {
+                    form.setError(key, { type: 'server', message }, { shouldFocus: index === 0 })
+                  })
+                  setFormError(null)
+                } else {
+                  setFormError(error.message || 'Registration failed. Try again.')
+                }
               } else {
                 setFormError('Registration failed. Try again.')
               }
@@ -83,6 +93,9 @@ export function RegisterPage() {
               <option value="AMBASSADOR">Ambassador</option>
               <option value="BUSINESS">Business</option>
             </select>
+            {form.formState.errors.role ? (
+              <p className="field__error">{form.formState.errors.role.message}</p>
+            ) : null}
           </div>
           <div className="field">
             <label htmlFor="reg-name">Full name</label>
