@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -19,30 +19,41 @@ import { CampaignCommercialAddOns } from './CampaignCommercialAddOns'
 import { CampaignCoverPanel } from './CampaignCoverPanel'
 import { CampaignLifecycleActions } from './CampaignLifecycleActions'
 import { CampaignResourcesPanel } from './CampaignResourcesPanel'
+import { CampaignSetupChecklist } from './CampaignSetupChecklist'
 import { CampaignStatusPanel } from './CampaignStatusBadge'
 import { CampaignVersionEditor } from './CampaignVersionEditor'
-import { fieldErrorsFromApi, formatDateTime } from './format'
+import { categoryErrorFromApi, fieldErrorsFromApi, formatDateTime } from './format'
 import { businessCampaignKeys } from './queryKeys'
 import { canEditCampaignShell, canMutateVersions, versionStatusLabel } from './status'
 
 const shellSchema = z.object({
-  title: z.string().trim().min(1).max(255),
-  category_id: z.coerce.number().int().positive(),
+  title: z.string().trim().min(1, 'Title is required').max(255),
+  category_id: z.coerce.number().int().positive('Choose a category'),
 })
 
 type ShellValues = z.infer<typeof shellSchema>
+type DetailTab = 'overview' | 'version' | 'resources'
+
+const UNSAVED_VERSION_WARNING =
+  'You have unsaved changes to this draft version. Leave without saving? Your changes will be lost.'
 
 export function BusinessCampaignDetailPage() {
   const params = useParams()
   const id = Number(params.id)
   const queryClient = useQueryClient()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const justCreated = Boolean((location.state as { created?: boolean } | null)?.created)
   const { status: authStatus } = useAuth()
   const canMutateCover = authStatus === 'authenticated' || authStatus === 'restricted'
-  const [tab, setTab] = useState<'overview' | 'version' | 'resources'>('overview')
+  const [tab, setTab] = useState<DetailTab>(() =>
+    searchParams.get('tab') === 'version' ? 'version' : 'overview',
+  )
   const [selectedVersion, setSelectedVersion] = useState<number | null>(null)
   const [shellError, setShellError] = useState<string | null>(null)
   const [shellOk, setShellOk] = useState<string | null>(null)
   const [versionError, setVersionError] = useState<string | null>(null)
+  const [versionDirty, setVersionDirty] = useState(false)
 
   const campaignQuery = useQuery({
     queryKey: businessCampaignKeys.detail(id),
@@ -75,6 +86,20 @@ export function BusinessCampaignDetailPage() {
   const activeVersion = versions.find((v) => v.version_number === activeVersionNumber) ?? null
   const hasDraft = versions.some((v) => v.status === 'draft')
 
+  const confirmLeaveDirtyVersion = () => !versionDirty || window.confirm(UNSAVED_VERSION_WARNING)
+
+  const openTab = (next: DetailTab) => {
+    if (next === tab) return
+    if (tab === 'version' && !confirmLeaveDirtyVersion()) return
+    setTab(next)
+  }
+
+  const selectVersion = (versionNumber: number) => {
+    if (versionNumber === activeVersionNumber) return
+    if (!confirmLeaveDirtyVersion()) return
+    setSelectedVersion(versionNumber)
+  }
+
   const shellForm = useForm<ShellValues>({
     resolver: zodResolver(shellSchema),
     values: campaign
@@ -92,11 +117,17 @@ export function BusinessCampaignDetailPage() {
     onError: (err) => {
       setShellOk(null)
       if (err instanceof ApiClientError) {
-        setShellError(err.message)
         const fields = fieldErrorsFromApi(err)
+        const categoryMessage = categoryErrorFromApi(err)
+        if (categoryMessage) fields.category_id = categoryMessage
+        let mapped = 0
         for (const [key, message] of Object.entries(fields)) {
-          if (key === 'title' || key === 'category_id') shellForm.setError(key, { message })
+          if (key === 'title' || key === 'category_id') {
+            shellForm.setError(key, { message })
+            mapped += 1
+          }
         }
+        setShellError(mapped > 0 ? null : err.message)
         if (err.status === 409)
           void queryClient.invalidateQueries({ queryKey: businessCampaignKeys.detail(id) })
       } else {
@@ -155,7 +186,14 @@ export function BusinessCampaignDetailPage() {
       />
       <div className="desk-page reveal">
         <p>
-          <Link to="/app/business/campaigns">← Campaigns</Link>
+          <Link
+            to="/app/business/campaigns"
+            onClick={(event) => {
+              if (!confirmLeaveDirtyVersion()) event.preventDefault()
+            }}
+          >
+            ← Campaigns
+          </Link>
         </p>
 
         <header className="desk-header">
@@ -168,8 +206,16 @@ export function BusinessCampaignDetailPage() {
           </div>
         </header>
 
+        {justCreated ? (
+          <div className="alert alert--success" role="status">
+            Campaign draft created. Next, create a draft commercial version with pricing, commission
+            and official payment details.
+          </div>
+        ) : null}
+
         <div className="campaign-desk-grid">
           <div className="stack stack--lg">
+            <CampaignSetupChecklist campaign={campaign} versions={versions} onOpenTab={openTab} />
             <div className="tabs" role="tablist" aria-label="Campaign sections">
               {(
                 [
@@ -183,7 +229,7 @@ export function BusinessCampaignDetailPage() {
                   type="button"
                   role="tab"
                   aria-selected={tab === key}
-                  onClick={() => setTab(key)}
+                  onClick={() => openTab(key)}
                 >
                   {label}
                 </button>
@@ -210,22 +256,36 @@ export function BusinessCampaignDetailPage() {
                   <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
                     Listing identity only. Commercial contract lives on the campaign version.
                   </p>
-                  <div className="field">
+                  <div
+                    className={`field${shellForm.formState.errors.title ? ' field--invalid' : ''}`}
+                  >
                     <label htmlFor="shell-title">Title</label>
                     <input
                       id="shell-title"
                       disabled={!editableShell || saveShell.isPending}
+                      aria-invalid={shellForm.formState.errors.title ? true : undefined}
+                      aria-describedby={
+                        shellForm.formState.errors.title ? 'shell-title-error' : undefined
+                      }
                       {...shellForm.register('title')}
                     />
                     {shellForm.formState.errors.title ? (
-                      <p className="field__error">{shellForm.formState.errors.title.message}</p>
+                      <p id="shell-title-error" className="field__error">
+                        {shellForm.formState.errors.title.message}
+                      </p>
                     ) : null}
                   </div>
-                  <div className="field">
+                  <div
+                    className={`field${shellForm.formState.errors.category_id ? ' field--invalid' : ''}`}
+                  >
                     <label htmlFor="shell-category">Category</label>
                     <select
                       id="shell-category"
                       disabled={!editableShell || saveShell.isPending}
+                      aria-invalid={shellForm.formState.errors.category_id ? true : undefined}
+                      aria-describedby={
+                        shellForm.formState.errors.category_id ? 'shell-category-error' : undefined
+                      }
                       {...shellForm.register('category_id')}
                     >
                       <option value={0}>Select</option>
@@ -239,6 +299,11 @@ export function BusinessCampaignDetailPage() {
                           </option>
                         ))}
                     </select>
+                    {shellForm.formState.errors.category_id ? (
+                      <p id="shell-category-error" className="field__error">
+                        {shellForm.formState.errors.category_id.message}
+                      </p>
+                    ) : null}
                   </div>
                   {editableShell ? (
                     <Button type="submit" disabled={saveShell.isPending}>
@@ -298,7 +363,11 @@ export function BusinessCampaignDetailPage() {
                   {versionsQuery.isLoading ? <LoadingState label="Loading versions…" /> : null}
                   {versions.length === 0 ? (
                     <div className="stack">
-                      <p>No commercial versions yet.</p>
+                      <p>
+                        No commercial versions yet. Create a draft version to add pricing,
+                        commission and official payment details. You can save it and come back at
+                        any time.
+                      </p>
                       {versionsAllowed ? (
                         <Button
                           onClick={() => createVersion.mutate()}
@@ -327,7 +396,7 @@ export function BusinessCampaignDetailPage() {
                                 ? 'var(--color-primary)'
                                 : undefined,
                           }}
-                          onClick={() => setSelectedVersion(v.version_number)}
+                          onClick={() => selectVersion(v.version_number)}
                         >
                           <strong>
                             Version {v.version_number} · {versionStatusLabel(v.status)}
@@ -353,6 +422,7 @@ export function BusinessCampaignDetailPage() {
                       campaignId={id}
                       version={activeVersion}
                       readOnly={versionReadOnly}
+                      onDirtyChange={setVersionDirty}
                     />
                   </div>
                 ) : null}
@@ -364,7 +434,9 @@ export function BusinessCampaignDetailPage() {
 
           <aside className="detail-aside">
             <CampaignStatusPanel status={campaign.status} reviewReason={campaign.review_reason} />
-            <CampaignLifecycleActions campaign={campaign} />
+            <div id="campaign-lifecycle">
+              <CampaignLifecycleActions campaign={campaign} />
+            </div>
             <CampaignCommercialAddOns campaign={campaign} />
             <div className="card stack stack--sm">
               <h2 style={{ fontSize: '1.05rem' }}>Current published version</h2>

@@ -1,140 +1,158 @@
-import { useEffect, useState } from 'react'
-import { useForm, useFieldArray } from 'react-hook-form'
-import { z } from 'zod'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useForm, useFieldArray, useWatch, type FieldPath } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ApiClientError } from '@/shared/api/errors'
 import { Button } from '@/shared/ui/Button'
 import { publishCampaignVersion, updateCampaignVersion } from './api'
-import { emptyToNull, fieldErrorsFromApi, optionalNumber } from './format'
+import { fieldErrorsFromApi } from './format'
 import { businessCampaignKeys } from './queryKeys'
-import type { CampaignVersion } from './types'
+import type { CampaignVersion, CampaignVersionInput } from './types'
+import {
+  VERSION_FIELD_LABELS,
+  VERSION_FIELD_ORDER,
+  buildVersionPayload,
+  checkPublishable,
+  formPathForServerKey,
+  friendlyServerFieldMessage,
+  isFieldApplicable,
+  isRequiredToPublish,
+  toVersionFormValues,
+  versionFormSchema,
+  type VersionFieldErrors,
+  type VersionFieldName,
+  type VersionFormValues,
+} from './versionForm'
 
-const schema = z.object({
-  product_name: z.string().max(255),
-  product_description: z.string().max(10000),
-  pricing_method: z.enum(['', 'fixed', 'quote', 'other']),
-  price_amount: z.string(),
-  price_currency: z.string().max(3),
-  service_area: z.string().max(255),
-  commission_type: z.enum(['', 'percentage', 'fixed']),
-  commission_rate: z.string(),
-  commission_amount: z.string(),
-  commission_trigger: z.enum(['', 'payment_confirmation', 'other']),
-  commission_trigger_description: z.string().max(255),
-  commission_payment_deadline_days: z.string(),
-  minimum_qualifying_amount: z.string(),
-  qualifying_conditions: z.string().max(10000),
-  refund_cancellation_rules: z.string().max(10000),
-  approved_claims: z.string().max(10000),
-  prohibited_claims: z.string().max(10000),
-  brand_use_rules: z.string().max(10000),
-  geographic_customer_restrictions: z.string().max(10000),
-  approved_copy: z.string().max(10000),
-  marketing_links: z.array(z.object({ url: z.string() })),
-  payment_destination_name: z.string().max(255),
-  payment_provider: z.string().max(255),
-  payment_account_identifier: z.string().max(255),
-  payment_instructions: z.string().max(10000),
-  payment_contact: z.string().max(255),
-  terms: z.string().max(20000),
-})
+type FormPath = FieldPath<VersionFormValues>
+type SummaryContext = 'publish' | 'save'
+type SummaryItem = { path: string; inputId: string; label: string; message: string }
 
-type FormValues = z.infer<typeof schema>
-
-function toFormValues(version: CampaignVersion): FormValues {
-  return {
-    product_name: version.product_name ?? '',
-    product_description: version.product_description ?? '',
-    pricing_method: version.pricing_method ?? '',
-    price_amount: version.price_amount != null ? String(version.price_amount) : '',
-    price_currency: version.price_currency ?? 'NGN',
-    service_area: version.service_area ?? '',
-    commission_type: version.commission_type ?? '',
-    commission_rate: version.commission_rate != null ? String(version.commission_rate) : '',
-    commission_amount: version.commission_amount != null ? String(version.commission_amount) : '',
-    commission_trigger: version.commission_trigger ?? '',
-    commission_trigger_description: version.commission_trigger_description ?? '',
-    commission_payment_deadline_days:
-      version.commission_payment_deadline_days != null
-        ? String(version.commission_payment_deadline_days)
-        : '',
-    minimum_qualifying_amount:
-      version.minimum_qualifying_amount != null ? String(version.minimum_qualifying_amount) : '',
-    qualifying_conditions: version.qualifying_conditions ?? '',
-    refund_cancellation_rules: version.refund_cancellation_rules ?? '',
-    approved_claims: version.approved_claims ?? '',
-    prohibited_claims: version.prohibited_claims ?? '',
-    brand_use_rules: version.brand_use_rules ?? '',
-    geographic_customer_restrictions: version.geographic_customer_restrictions ?? '',
-    approved_copy: version.approved_copy ?? '',
-    marketing_links: (version.marketing_links ?? []).map((url) => ({ url })),
-    payment_destination_name: version.payment_destination_name ?? '',
-    payment_provider: version.payment_provider ?? '',
-    payment_account_identifier: version.payment_account_identifier ?? '',
-    payment_instructions: version.payment_instructions ?? '',
-    payment_contact: version.payment_contact ?? '',
-    terms: version.terms ?? '',
-  }
+type FieldA11y = {
+  id: string
+  'aria-invalid'?: true
+  'aria-describedby'?: string
 }
 
-function toPayload(values: FormValues) {
-  const links = values.marketing_links.map((l) => l.url.trim()).filter(Boolean)
-  return {
-    product_name: emptyToNull(values.product_name),
-    product_description: emptyToNull(values.product_description),
-    pricing_method: (emptyToNull(values.pricing_method) as FormValues['pricing_method']) || null,
-    price_amount: optionalNumber(values.price_amount),
-    price_currency: emptyToNull(values.price_currency)?.toUpperCase() ?? null,
-    service_area: emptyToNull(values.service_area),
-    commission_type: (emptyToNull(values.commission_type) as FormValues['commission_type']) || null,
-    commission_rate: optionalNumber(values.commission_rate),
-    commission_amount: optionalNumber(values.commission_amount),
-    commission_trigger:
-      (emptyToNull(values.commission_trigger) as FormValues['commission_trigger']) || null,
-    commission_trigger_description: emptyToNull(values.commission_trigger_description),
-    commission_payment_deadline_days: optionalNumber(values.commission_payment_deadline_days),
-    minimum_qualifying_amount: optionalNumber(values.minimum_qualifying_amount),
-    qualifying_conditions: emptyToNull(values.qualifying_conditions),
-    refund_cancellation_rules: emptyToNull(values.refund_cancellation_rules),
-    approved_claims: emptyToNull(values.approved_claims),
-    prohibited_claims: emptyToNull(values.prohibited_claims),
-    brand_use_rules: emptyToNull(values.brand_use_rules),
-    geographic_customer_restrictions: emptyToNull(values.geographic_customer_restrictions),
-    approved_copy: emptyToNull(values.approved_copy),
-    marketing_links: links,
-    payment_destination_name: emptyToNull(values.payment_destination_name),
-    payment_provider: emptyToNull(values.payment_provider),
-    payment_account_identifier: emptyToNull(values.payment_account_identifier),
-    payment_instructions: emptyToNull(values.payment_instructions),
-    payment_contact: emptyToNull(values.payment_contact),
-    terms: emptyToNull(values.terms),
-  }
+function VersionField({
+  id,
+  label,
+  requirement,
+  helper,
+  error,
+  className,
+  children,
+}: {
+  id: string
+  label: string
+  requirement?: 'required' | 'optional'
+  helper?: string
+  error?: string
+  className?: string
+  children: (a11y: FieldA11y) => ReactNode
+}) {
+  const helpId = helper ? `${id}-help` : null
+  const errorId = error ? `${id}-error` : null
+  const describedBy = [helpId, errorId].filter(Boolean).join(' ')
+  return (
+    <div className={['field', error ? 'field--invalid' : '', className].filter(Boolean).join(' ')}>
+      <label htmlFor={id}>
+        {label}
+        {requirement === 'required' ? (
+          <>
+            <span className="field__required" aria-hidden="true">
+              {' '}
+              *
+            </span>
+            <span className="visually-hidden"> (required to publish)</span>
+          </>
+        ) : null}
+        {requirement === 'optional' ? <span className="field__optional"> (optional)</span> : null}
+      </label>
+      {children({
+        id,
+        'aria-invalid': error ? true : undefined,
+        'aria-describedby': describedBy || undefined,
+      })}
+      {helper ? (
+        <p id={helpId ?? undefined} className="field__help">
+          {helper}
+        </p>
+      ) : null}
+      {error ? (
+        <p id={errorId ?? undefined} className="field__error">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+const CONDITIONAL_DEPENDENTS: Partial<Record<VersionFieldName, VersionFieldName[]>> = {
+  pricing_method: ['price_amount'],
+  commission_type: ['commission_rate', 'commission_amount'],
+  commission_trigger: ['commission_trigger_description'],
 }
 
 export function CampaignVersionEditor({
   campaignId,
   version,
   readOnly,
+  onDirtyChange,
 }: {
   campaignId: number
   version: CampaignVersion
   readOnly: boolean
+  onDirtyChange?: (dirty: boolean) => void
 }) {
   const queryClient = useQueryClient()
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [summaryContext, setSummaryContext] = useState<SummaryContext | null>(null)
+  const [summaryFocusRequest, setSummaryFocusRequest] = useState(0)
+  const summaryRef = useRef<HTMLDivElement>(null)
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: toFormValues(version),
+  const form = useForm<VersionFormValues>({
+    resolver: zodResolver(versionFormSchema),
+    defaultValues: toVersionFormValues(version),
   })
 
   const links = useFieldArray({ control: form.control, name: 'marketing_links' })
 
   useEffect(() => {
-    form.reset(toFormValues(version))
+    form.reset(toVersionFormValues(version))
   }, [version, form])
+
+  const dirty = !readOnly && form.formState.isDirty
+
+  useEffect(() => {
+    onDirtyChange?.(dirty)
+  }, [dirty, onDirtyChange])
+
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
+
+  useEffect(() => {
+    if (!dirty) return
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty])
+
+  useEffect(() => {
+    if (summaryFocusRequest > 0) summaryRef.current?.focus()
+  }, [summaryFocusRequest])
+
+  const pricingMethod = useWatch({ control: form.control, name: 'pricing_method' })
+  const commissionType = useWatch({ control: form.control, name: 'commission_type' })
+  const commissionTrigger = useWatch({ control: form.control, name: 'commission_trigger' })
+  const conditions = {
+    pricing_method: pricingMethod,
+    commission_type: commissionType,
+    commission_trigger: commissionTrigger,
+  }
 
   const invalidate = async () => {
     await Promise.all([
@@ -144,34 +162,65 @@ export function CampaignVersionEditor({
     ])
   }
 
+  const showFieldErrors = (
+    errors: VersionFieldErrors | Record<string, string>,
+    context: SummaryContext,
+  ) => {
+    for (const [path, msg] of Object.entries(errors)) {
+      if (msg) form.setError(path as FormPath, { type: 'manual', message: msg })
+    }
+    setSummaryContext(context)
+    setSummaryFocusRequest((n) => n + 1)
+  }
+
+  const handleServerError = (err: unknown, context: SummaryContext, fallback: string) => {
+    setMessage(null)
+    if (!(err instanceof ApiClientError)) {
+      setError(fallback)
+      return
+    }
+    const mapped: Record<string, string> = {}
+    const unmapped: string[] = []
+    for (const [key, msg] of Object.entries(fieldErrorsFromApi(err))) {
+      const path = formPathForServerKey(key)
+      if (path.startsWith('marketing_links.') || path in VERSION_FIELD_LABELS) {
+        mapped[path] = friendlyServerFieldMessage(key, msg)
+      } else {
+        unmapped.push(msg)
+      }
+    }
+    if (Object.keys(mapped).length > 0) {
+      setError(unmapped.length > 0 ? unmapped.join(' ') : null)
+      showFieldErrors(mapped, context)
+    } else {
+      setError(unmapped.length > 0 ? unmapped.join(' ') : err.message)
+    }
+    if (err.status === 409) void invalidate()
+  }
+
+  const resetFeedback = () => {
+    setMessage(null)
+    setError(null)
+    setSummaryContext(null)
+    form.clearErrors()
+  }
+
   const save = useMutation({
-    mutationFn: (values: FormValues) =>
-      updateCampaignVersion(campaignId, version.version_number, toPayload(values)),
+    mutationFn: (payload: CampaignVersionInput) =>
+      updateCampaignVersion(campaignId, version.version_number, payload),
     onSuccess: async () => {
       setError(null)
       setMessage('Draft version saved.')
+      form.reset(form.getValues())
       await invalidate()
     },
-    onError: (err) => {
-      setMessage(null)
-      if (err instanceof ApiClientError) {
-        setError(err.message)
-        const fields = fieldErrorsFromApi(err)
-        for (const [key, msg] of Object.entries(fields)) {
-          // @ts-expect-error dynamic field keys from API
-          form.setError(key, { message: msg })
-        }
-        if (err.status === 409) void invalidate()
-      } else {
-        setError('Save failed.')
-      }
-    },
+    onError: (err) => handleServerError(err, 'save', 'Save failed.'),
   })
 
   const publish = useMutation({
-    mutationFn: async () => {
-      const values = form.getValues()
-      await updateCampaignVersion(campaignId, version.version_number, toPayload(values))
+    mutationFn: async (payload: CampaignVersionInput) => {
+      await updateCampaignVersion(campaignId, version.version_number, payload)
+      form.reset(form.getValues(), { keepErrors: true })
       return publishCampaignVersion(campaignId, version.version_number)
     },
     onSuccess: async () => {
@@ -179,34 +228,132 @@ export function CampaignVersionEditor({
       setMessage(
         'Commercial version published. This freezes terms. The campaign is not marketplace-active until submitted, approved, and activated.',
       )
+      form.reset(form.getValues())
       await invalidate()
     },
-    onError: (err) => {
-      setMessage(null)
-      if (err instanceof ApiClientError) {
-        setError(err.message)
-        const fields = fieldErrorsFromApi(err)
-        for (const [key, msg] of Object.entries(fields)) {
-          // @ts-expect-error dynamic field keys from API
-          form.setError(key, { message: msg })
-        }
-        if (err.status === 409) void invalidate()
-      } else {
-        setError('Publish failed.')
-      }
-    },
+    onError: (err) => handleServerError(err, 'publish', 'Publish failed.'),
   })
 
+  const attemptPublish = async () => {
+    resetFeedback()
+    const schemaValid = await form.trigger()
+    const values = form.getValues()
+    const publishErrors = checkPublishable(values)
+    if (!schemaValid || Object.keys(publishErrors).length > 0) {
+      showFieldErrors(publishErrors, 'publish')
+      return
+    }
+    if (
+      !window.confirm(
+        'Publish this commercial version? Terms will become immutable. The campaign will not go live until submitted, approved, and activated.',
+      )
+    ) {
+      return
+    }
+    publish.mutate(buildVersionPayload(values).payload)
+  }
+
+  const register = (name: VersionFieldName) =>
+    form.register(name, {
+      onChange: () => {
+        form.clearErrors([name, ...(CONDITIONAL_DEPENDENTS[name] ?? [])])
+      },
+    })
+
+  const fieldError = (name: VersionFieldName): string | undefined =>
+    form.formState.errors[name]?.message
+
+  const requirement = (name: VersionFieldName): 'required' | undefined =>
+    !readOnly && isRequiredToPublish(name, conditions) ? 'required' : undefined
+
+  const summaryItems: SummaryItem[] = []
+  for (const name of VERSION_FIELD_ORDER) {
+    const msg = fieldError(name)
+    if (msg) {
+      summaryItems.push({
+        path: name,
+        inputId: name,
+        label: VERSION_FIELD_LABELS[name],
+        message: msg,
+      })
+    }
+  }
+  links.fields.forEach((_, index) => {
+    const msg = form.formState.errors.marketing_links?.[index]?.url?.message
+    if (msg) {
+      summaryItems.push({
+        path: `marketing_links.${index}.url`,
+        inputId: `link-${index}`,
+        label: `Marketing link ${index + 1}`,
+        message: msg,
+      })
+    }
+  })
+
+  const showSummary = summaryContext !== null && summaryItems.length > 0
   const disabled = readOnly || save.isPending || publish.isPending
+
+  const textInput = (
+    name: VersionFieldName,
+    opts: { helper?: string; autoComplete?: string } = {},
+  ) => (
+    <VersionField
+      id={name}
+      label={VERSION_FIELD_LABELS[name]}
+      requirement={requirement(name)}
+      helper={readOnly ? undefined : opts.helper}
+      error={fieldError(name)}
+    >
+      {(a11y) => (
+        <input {...a11y} disabled={disabled} autoComplete={opts.autoComplete} {...register(name)} />
+      )}
+    </VersionField>
+  )
+
+  const numberInput = (name: VersionFieldName, helper: string, label?: string) => (
+    <VersionField
+      id={name}
+      label={label ?? VERSION_FIELD_LABELS[name]}
+      requirement={requirement(name)}
+      helper={readOnly ? undefined : helper}
+      error={fieldError(name)}
+    >
+      {(a11y) => <input {...a11y} inputMode="decimal" disabled={disabled} {...register(name)} />}
+    </VersionField>
+  )
+
+  const textArea = (name: VersionFieldName, helper?: string) => (
+    <VersionField
+      id={name}
+      label={VERSION_FIELD_LABELS[name]}
+      requirement={requirement(name)}
+      helper={readOnly ? undefined : helper}
+      error={fieldError(name)}
+    >
+      {(a11y) => <textarea {...a11y} disabled={disabled} {...register(name)} />}
+    </VersionField>
+  )
 
   return (
     <form
       className="stack"
-      onSubmit={form.handleSubmit((values) => {
-        setMessage(null)
-        setError(null)
-        save.mutate(values)
-      })}
+      noValidate
+      onSubmit={form.handleSubmit(
+        (values) => {
+          resetFeedback()
+          const { payload, errors } = buildVersionPayload(values)
+          if (Object.keys(errors).length > 0) {
+            showFieldErrors(errors, 'save')
+            return
+          }
+          save.mutate(payload)
+        },
+        () => {
+          setMessage(null)
+          setSummaryContext('save')
+          setSummaryFocusRequest((n) => n + 1)
+        },
+      )}
     >
       {readOnly ? (
         <div className="alert alert--info">
@@ -216,55 +363,101 @@ export function CampaignVersionEditor({
       ) : (
         <div className="alert alert--info">
           Publishing freezes commercial terms for this version. It does not activate the campaign
-          listing.
+          listing. Fields marked <span aria-hidden="true">*</span>
+          <span className="visually-hidden">as required</span> are required to publish — you can
+          save a draft at any time.
         </div>
       )}
+
+      {showSummary ? (
+        <div
+          ref={summaryRef}
+          className="alert alert--danger error-summary"
+          role="alert"
+          tabIndex={-1}
+          aria-labelledby="version-error-summary-title"
+        >
+          <p id="version-error-summary-title" className="error-summary__title">
+            {summaryContext === 'publish'
+              ? 'Some details need attention before publishing.'
+              : 'Some details need attention before saving.'}
+          </p>
+          <ul className="error-summary__list">
+            {summaryItems.map((item) => (
+              <li key={item.path}>
+                <a
+                  href={`#${item.inputId}`}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    document.getElementById(item.inputId)?.focus()
+                  }}
+                >
+                  {item.label}
+                </a>
+                : {item.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <section className="form-section">
         <h2>Product & pricing</h2>
         <p className="form-section__lead">What ambassadors will promote and how it is priced.</p>
         <div className="grid-2">
-          <div className="field">
-            <label htmlFor="product_name">Product / service name</label>
-            <input id="product_name" disabled={disabled} {...form.register('product_name')} />
-          </div>
-          <div className="field">
-            <label htmlFor="service_area">Service area</label>
-            <input id="service_area" disabled={disabled} {...form.register('service_area')} />
-          </div>
+          {textInput('product_name')}
+          {textInput('service_area')}
         </div>
-        <div className="field">
-          <label htmlFor="product_description">Product description</label>
-          <textarea
-            id="product_description"
-            disabled={disabled}
-            {...form.register('product_description')}
-          />
-        </div>
+        {textArea('product_description')}
         <div className="grid-2">
-          <div className="field">
-            <label htmlFor="pricing_method">Pricing method</label>
-            <select id="pricing_method" disabled={disabled} {...form.register('pricing_method')}>
-              <option value="">Select</option>
-              <option value="fixed">Fixed</option>
-              <option value="quote">Quote</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="price_currency">Currency</label>
-            <input
-              id="price_currency"
-              disabled={disabled}
-              maxLength={3}
-              {...form.register('price_currency')}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="price_amount">Price amount</label>
-            <input id="price_amount" disabled={disabled} {...form.register('price_amount')} />
-          </div>
+          <VersionField
+            id="pricing_method"
+            label={VERSION_FIELD_LABELS.pricing_method}
+            requirement={requirement('pricing_method')}
+            error={fieldError('pricing_method')}
+          >
+            {(a11y) => (
+              <select {...a11y} disabled={disabled} {...register('pricing_method')}>
+                <option value="">Select</option>
+                <option value="fixed">Fixed</option>
+                <option value="quote">Quote</option>
+                <option value="other">Other</option>
+              </select>
+            )}
+          </VersionField>
+          <VersionField
+            id="price_currency"
+            label={VERSION_FIELD_LABELS.price_currency}
+            error={fieldError('price_currency')}
+          >
+            {(a11y) => (
+              <input {...a11y} disabled={disabled} maxLength={3} {...register('price_currency')} />
+            )}
+          </VersionField>
+          {isFieldApplicable('price_amount', conditions) ? (
+            <VersionField
+              id="price_amount"
+              label={VERSION_FIELD_LABELS.price_amount}
+              requirement={
+                readOnly ? undefined : pricingMethod === 'fixed' ? 'required' : 'optional'
+              }
+              helper={readOnly ? undefined : 'For example 250,000 or 250000.50.'}
+              error={fieldError('price_amount')}
+            >
+              {(a11y) => (
+                <input
+                  {...a11y}
+                  inputMode="decimal"
+                  disabled={disabled}
+                  {...register('price_amount')}
+                />
+              )}
+            </VersionField>
+          ) : null}
         </div>
+        {pricingMethod === 'quote' && !readOnly ? (
+          <p className="field__help">Quote pricing: customers agree a price with you directly.</p>
+        ) : null}
       </section>
 
       <section className="form-section">
@@ -273,91 +466,69 @@ export function CampaignVersionEditor({
           Business → Ambassador settlement terms. MarcatursHub does not pay ambassadors.
         </p>
         <div className="grid-2">
-          <div className="field">
-            <label htmlFor="commission_type">Commission type</label>
-            <select id="commission_type" disabled={disabled} {...form.register('commission_type')}>
-              <option value="">Select</option>
-              <option value="percentage">Percentage</option>
-              <option value="fixed">Fixed</option>
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="commission_trigger">Commission trigger</label>
-            <select
-              id="commission_trigger"
-              disabled={disabled}
-              {...form.register('commission_trigger')}
-            >
-              <option value="">Select</option>
-              <option value="payment_confirmation">Payment confirmation</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="commission_rate">Commission rate (%)</label>
-            <input id="commission_rate" disabled={disabled} {...form.register('commission_rate')} />
-          </div>
-          <div className="field">
-            <label htmlFor="commission_amount">Commission amount</label>
-            <input
-              id="commission_amount"
-              disabled={disabled}
-              {...form.register('commission_amount')}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="commission_payment_deadline_days">Payment deadline (days)</label>
-            <input
-              id="commission_payment_deadline_days"
-              disabled={disabled}
-              {...form.register('commission_payment_deadline_days')}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="minimum_qualifying_amount">Minimum qualifying amount</label>
-            <input
-              id="minimum_qualifying_amount"
-              disabled={disabled}
-              {...form.register('minimum_qualifying_amount')}
-            />
-          </div>
+          <VersionField
+            id="commission_type"
+            label={VERSION_FIELD_LABELS.commission_type}
+            requirement={requirement('commission_type')}
+            error={fieldError('commission_type')}
+          >
+            {(a11y) => (
+              <select {...a11y} disabled={disabled} {...register('commission_type')}>
+                <option value="">Select</option>
+                <option value="percentage">Percentage</option>
+                <option value="fixed">Fixed</option>
+              </select>
+            )}
+          </VersionField>
+          <VersionField
+            id="commission_trigger"
+            label={VERSION_FIELD_LABELS.commission_trigger}
+            requirement={requirement('commission_trigger')}
+            error={fieldError('commission_trigger')}
+          >
+            {(a11y) => (
+              <select {...a11y} disabled={disabled} {...register('commission_trigger')}>
+                <option value="">Select</option>
+                <option value="payment_confirmation">Payment confirmation</option>
+                <option value="other">Other</option>
+              </select>
+            )}
+          </VersionField>
+          {isFieldApplicable('commission_rate', conditions)
+            ? numberInput('commission_rate', 'For example 10 for 10% of the qualifying payment.')
+            : null}
+          {isFieldApplicable('commission_amount', conditions)
+            ? numberInput(
+                'commission_amount',
+                'Fixed amount per qualifying sale, for example 5,000.',
+              )
+            : null}
+          {numberInput(
+            'commission_payment_deadline_days',
+            'Calendar days you have to pay commission after confirming the customer’s payment: 1 to 7. Seven days is the platform maximum.',
+          )}
+          {numberInput(
+            'minimum_qualifying_amount',
+            'Optional. Smallest customer payment that earns commission.',
+          )}
         </div>
-        <div className="field">
-          <label htmlFor="commission_trigger_description">Trigger description</label>
-          <input
-            id="commission_trigger_description"
-            disabled={disabled}
-            {...form.register('commission_trigger_description')}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="qualifying_conditions">Qualifying conditions</label>
-          <textarea
-            id="qualifying_conditions"
-            disabled={disabled}
-            {...form.register('qualifying_conditions')}
-          />
-        </div>
+        {isFieldApplicable('commission_trigger_description', conditions)
+          ? textInput('commission_trigger_description', {
+              helper: 'Describe exactly when commission becomes due.',
+            })
+          : null}
+        {textArea('qualifying_conditions')}
       </section>
 
       <section className="form-section">
         <h2>Policies & claims</h2>
-        {(
-          [
-            ['refund_cancellation_rules', 'Refund / cancellation rules'],
-            ['approved_claims', 'Approved claims'],
-            ['prohibited_claims', 'Prohibited claims'],
-            ['brand_use_rules', 'Brand-use rules'],
-            ['geographic_customer_restrictions', 'Geographic / customer restrictions'],
-            ['approved_copy', 'Approved copy'],
-            ['terms', 'Terms'],
-          ] as const
-        ).map(([name, label]) => (
-          <div className="field" key={name}>
-            <label htmlFor={name}>{label}</label>
-            <textarea id={name} disabled={disabled} {...form.register(name)} />
-          </div>
-        ))}
+        {textArea('refund_cancellation_rules')}
+        {textArea('approved_claims')}
+        {textArea('prohibited_claims')}
+        {textArea('brand_use_rules')}
+        {textArea('geographic_customer_restrictions')}
+        {textArea('approved_copy')}
+        {textArea('terms')}
         <div className="stack stack--sm">
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <strong>Marketing links</strong>
@@ -372,77 +543,79 @@ export function CampaignVersionEditor({
               </Button>
             ) : null}
           </div>
-          {links.fields.map((field, index) => (
-            <div className="row" key={field.id}>
-              <div className="field" style={{ flex: 1 }}>
-                <label htmlFor={`link-${index}`}>URL</label>
-                <input
+          {links.fields.map((field, index) => {
+            const linkError = form.formState.errors.marketing_links?.[index]?.url?.message
+            return (
+              <div className="row" key={field.id}>
+                <VersionField
                   id={`link-${index}`}
-                  disabled={disabled}
-                  {...form.register(`marketing_links.${index}.url`)}
-                />
-              </div>
-              {!readOnly ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => links.remove(index)}
-                  style={{ alignSelf: 'end' }}
+                  label="URL"
+                  error={linkError}
+                  className="field--grow"
                 >
-                  Remove
-                </Button>
-              ) : null}
-            </div>
-          ))}
+                  {(a11y) => (
+                    <input
+                      {...a11y}
+                      disabled={disabled}
+                      {...form.register(`marketing_links.${index}.url`, {
+                        onChange: () => form.clearErrors(`marketing_links.${index}.url`),
+                      })}
+                    />
+                  )}
+                </VersionField>
+                {!readOnly ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => links.remove(index)}
+                    style={{ alignSelf: 'end' }}
+                  >
+                    Remove
+                  </Button>
+                ) : null}
+              </div>
+            )
+          })}
         </div>
       </section>
 
       <section className="form-section">
-        <h2>Payment destination</h2>
+        <h2>Official payment details</h2>
         <p className="form-section__lead">
-          Where customers should pay you (Customer → Business). Never imply MarcatursHub processes
-          the purchase.
+          Where customers pay your business directly. MarcatursHub does not receive or hold this
+          payment.
         </p>
         <div className="grid-2">
-          <div className="field">
-            <label htmlFor="payment_destination_name">Destination name</label>
-            <input
-              id="payment_destination_name"
-              disabled={disabled}
-              {...form.register('payment_destination_name')}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="payment_provider">Provider</label>
-            <input
-              id="payment_provider"
-              disabled={disabled}
-              {...form.register('payment_provider')}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="payment_account_identifier">Account identifier</label>
-            <input
-              id="payment_account_identifier"
-              disabled={disabled}
-              autoComplete="off"
-              {...form.register('payment_account_identifier')}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="payment_contact">Payment contact</label>
-            <input id="payment_contact" disabled={disabled} {...form.register('payment_contact')} />
-          </div>
+          {textInput('payment_destination_name', {
+            helper: 'Name exactly as it appears on the account.',
+          })}
+          {textInput('payment_provider', {
+            helper:
+              'For example GTBank, Access Bank, Moniepoint, OPay, or another payment provider.',
+          })}
+          {textInput('payment_account_identifier', {
+            helper: 'Bank account number, wallet or merchant ID, or another payment identifier.',
+            autoComplete: 'off',
+          })}
+          <VersionField
+            id="payment_contact"
+            label={VERSION_FIELD_LABELS.payment_contact}
+            requirement={readOnly ? undefined : 'optional'}
+            helper={
+              readOnly
+                ? undefined
+                : 'Phone number or email customers can use for payment questions.'
+            }
+            error={fieldError('payment_contact')}
+          >
+            {(a11y) => <input {...a11y} disabled={disabled} {...register('payment_contact')} />}
+          </VersionField>
         </div>
-        <div className="field">
-          <label htmlFor="payment_instructions">Payment instructions</label>
-          <textarea
-            id="payment_instructions"
-            disabled={disabled}
-            {...form.register('payment_instructions')}
-          />
-        </div>
+        {textArea(
+          'payment_instructions',
+          'For example: Use your full name as the transfer narration.',
+        )}
       </section>
 
       {!readOnly ? (
@@ -454,24 +627,18 @@ export function CampaignVersionEditor({
             type="button"
             variant="secondary"
             disabled={disabled}
-            onClick={() => {
-              if (
-                !window.confirm(
-                  'Publish this commercial version? Terms will become immutable. The campaign will not go live until submitted, approved, and activated.',
-                )
-              ) {
-                return
-              }
-              setMessage(null)
-              setError(null)
-              publish.mutate()
-            }}
+            onClick={() => void attemptPublish()}
           >
             {publish.isPending ? 'Publishing…' : 'Publish version'}
           </Button>
         </div>
       ) : null}
 
+      {showSummary ? (
+        <p className="field__error">
+          Some details need attention — see the list at the top of this form.
+        </p>
+      ) : null}
       {error ? (
         <div className="alert alert--danger" role="alert">
           {error}

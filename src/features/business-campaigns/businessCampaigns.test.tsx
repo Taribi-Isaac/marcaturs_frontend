@@ -1,6 +1,6 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { AppProviders } from '@/app/providers'
@@ -90,6 +90,45 @@ function draftVersion(campaignId: number, n = 1): CampaignVersion {
     updated_at: '2026-09-01T00:00:00+00:00',
   }
 }
+
+/** Mirrors CampaignVersionService::assertPublishable and Laravel's default required message. */
+function publishValidationDetails(version: CampaignVersion): Record<string, string[]> {
+  const required: (keyof CampaignVersion)[] = [
+    'product_name',
+    'pricing_method',
+    'commission_type',
+    'commission_trigger',
+    'commission_payment_deadline_days',
+    'refund_cancellation_rules',
+    'payment_destination_name',
+    'payment_provider',
+    'payment_account_identifier',
+    'payment_instructions',
+  ]
+  if (version.pricing_method === 'fixed') required.push('price_amount')
+  if (version.commission_type === 'percentage') required.push('commission_rate')
+  if (version.commission_type === 'fixed') required.push('commission_amount')
+  if (version.commission_trigger === 'other') required.push('commission_trigger_description')
+  const details: Record<string, string[]> = {}
+  for (const key of required) {
+    const value = version[key]
+    if (value === null || value === undefined || value === '') {
+      details[key] = [`The ${key.replace(/_/g, ' ')} field is required.`]
+    }
+  }
+  const deadline = version.commission_payment_deadline_days
+  if (deadline != null && (deadline < 1 || deadline > 7)) {
+    details.commission_payment_deadline_days = [
+      deadline < 1
+        ? 'The commission payment deadline days field must be at least 1.'
+        : 'The commission payment deadline days field must not be greater than 7.',
+    ]
+  }
+  return details
+}
+
+let versionPatches: Partial<CampaignVersion>[] = []
+let publishCalls = 0
 
 const server = setupServer(
   http.get('/sanctum/csrf-cookie', () => new HttpResponse(null, { status: 204 })),
@@ -251,10 +290,12 @@ const server = setupServer(
       )
     }
     const body = (await request.json()) as Partial<CampaignVersion>
+    versionPatches.push(body)
     Object.assign(version, body)
     return HttpResponse.json({ success: true, data: version })
   }),
   http.post('/api/v1/campaigns/:id/versions/:version/publish', ({ params }) => {
+    publishCalls += 1
     const campaignId = Number(params.id)
     const versionNumber = Number(params.version)
     const campaign = campaigns.find((c) => c.id === campaignId)
@@ -266,16 +307,18 @@ const server = setupServer(
         { status: 404 },
       )
     }
-    if (!version.payment_destination_name) {
+    const details = publishValidationDetails(version)
+    if (Object.keys(details).length > 0) {
       return HttpResponse.json(
         {
           success: false,
           error: {
-            code: 'business_validation',
-            message: 'Payment destination is required to publish.',
+            code: 'validation_error',
+            message: 'The given data was invalid.',
+            details,
           },
         },
-        { status: 422 },
+        { status: 400 },
       )
     }
     version.status = 'published'
@@ -399,6 +442,8 @@ afterEach(() => {
   campaigns = []
   versionsByCampaign = {}
   nextCampaignId = 100
+  versionPatches = []
+  publishCalls = 0
   server.resetHandlers()
 })
 afterAll(() => server.close())
@@ -427,21 +472,33 @@ describe('Business campaigns desk', () => {
     expect(badges.some((el) => el.className.includes('badge'))).toBe(true)
   })
 
-  it('validates create form and creates a campaign', async () => {
-    const user = userEvent.setup()
-    renderApp('/app/business/campaigns/new')
-    expect(await screen.findByRole('heading', { name: 'Create campaign' })).toBeInTheDocument()
-    const submit = await screen.findByRole('button', { name: /Create draft/i })
-    await user.click(submit)
-    expect(await screen.findByText(/Title is required/i)).toBeInTheDocument()
+  it(
+    'validates create form and creates a campaign',
+    async () => {
+      const user = userEvent.setup()
+      renderApp('/app/business/campaigns/new')
+      expect(await screen.findByRole('heading', { name: 'Create campaign' })).toBeInTheDocument()
+      const submit = await screen.findByRole('button', { name: /Create draft/i })
+      await user.click(submit)
+      expect(await screen.findByText(/Title is required/i)).toBeInTheDocument()
 
-    await user.type(screen.getByLabelText(/Campaign title/i), 'Lagos Solar Push')
-    await user.selectOptions(screen.getByLabelText(/Category/i), '10')
-    await user.click(screen.getByRole('button', { name: /Create draft/i }))
+      await user.type(screen.getByLabelText(/Campaign title/i), 'Lagos Solar Push')
+      await user.selectOptions(screen.getByLabelText(/Category/i), '10')
+      await user.click(screen.getByRole('button', { name: /Create draft/i }))
 
-    expect(await screen.findByRole('heading', { name: 'Lagos Solar Push' })).toBeInTheDocument()
-    expect(campaigns).toHaveLength(1)
-  })
+      expect(await screen.findByRole('heading', { name: 'Lagos Solar Push' })).toBeInTheDocument()
+      expect(campaigns).toHaveLength(1)
+      expect(screen.getByRole('tab', { name: /Commercial version/i })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      )
+      expect(screen.getByText(/Campaign draft created/i)).toBeInTheDocument()
+      expect(
+        await screen.findByRole('button', { name: /Create draft version/i }),
+      ).toBeInTheDocument()
+    },
+    15000,
+  )
 
   it('surfaces server validation errors on create', async () => {
     const user = userEvent.setup()
@@ -468,53 +525,58 @@ describe('Business campaigns desk', () => {
     expect(await screen.findByText('Title already used.')).toBeInTheDocument()
   })
 
-  it('shows detail, creates and publishes a version, then submits', async () => {
-    const user = userEvent.setup()
-    const campaign = draftCampaign({ id: 55, title: 'Submit Me' })
-    campaigns = [campaign]
-    versionsByCampaign[55] = []
-    window.confirm = () => true
-    server.use(
-      http.get(
-        '/api/v1/campaigns/:id/cover/download',
-        () => new HttpResponse('cover-bytes', { headers: { 'Content-Type': 'image/jpeg' } }),
-      ),
-    )
+  it(
+    'shows detail, creates and publishes a version, then submits',
+    async () => {
+      const user = userEvent.setup()
+      const campaign = draftCampaign({ id: 55, title: 'Submit Me' })
+      campaigns = [campaign]
+      versionsByCampaign[55] = []
+      window.confirm = () => true
+      // Clean-baseline CoverPanel loads previews via authenticated download fetch.
+      server.use(
+        http.get(
+          '/api/v1/campaigns/:id/cover/download',
+          () => new HttpResponse('cover-bytes', { headers: { 'Content-Type': 'image/jpeg' } }),
+        ),
+      )
 
-    renderApp('/app/business/campaigns/55')
-    expect(await screen.findByRole('heading', { name: 'Submit Me' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Campaign Cover' })).toBeInTheDocument()
-    expect(screen.getByText(/No cover yet/i)).toBeInTheDocument()
+      renderApp('/app/business/campaigns/55')
+      expect(await screen.findByRole('heading', { name: 'Submit Me' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Campaign Cover' })).toBeInTheDocument()
+      expect(screen.getByText(/No cover yet/i)).toBeInTheDocument()
 
-    const file = new File(['cover-bytes'], 'cover.jpg', { type: 'image/jpeg' })
-    const fileInput = document.querySelector(
-      '.campaign-cover-panel input[type="file"]',
-    ) as HTMLInputElement
-    expect(fileInput).toBeTruthy()
-    await user.upload(fileInput, file)
-    expect(await screen.findByText(/Cover uploaded/i)).toBeInTheDocument()
-    expect(campaigns[0]?.cover_image?.available).toBe(true)
+      const file = new File(['cover-bytes'], 'cover.jpg', { type: 'image/jpeg' })
+      const fileInput = document.querySelector(
+        '.campaign-cover-panel input[type="file"]',
+      ) as HTMLInputElement
+      expect(fileInput).toBeTruthy()
+      await user.upload(fileInput, file)
+      expect(await screen.findByText(/Cover uploaded/i)).toBeInTheDocument()
+      expect(campaigns[0]?.cover_image?.available).toBe(true)
 
-    expect(screen.getByText(/still being prepared/i)).toBeInTheDocument()
+      expect(screen.getByText(/still being prepared/i)).toBeInTheDocument()
 
-    await user.click(screen.getByRole('tab', { name: /Commercial version/i }))
-    await user.click(await screen.findByRole('button', { name: /Create draft version/i }))
-    expect(await screen.findByText(/Version 1/i)).toBeInTheDocument()
+      await user.click(screen.getByRole('tab', { name: /Commercial version/i }))
+      await user.click(await screen.findByRole('button', { name: /Create draft version/i }))
+      expect(await screen.findByText(/Version 1/i)).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /Publish version/i }))
-    await waitFor(() => {
-      expect(versionsByCampaign[55]?.[0]?.status).toBe('published')
-    })
-    expect(await screen.findByText(/Commercial version published/i)).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: /Publish version/i }))
+      await waitFor(() => {
+        expect(versionsByCampaign[55]?.[0]?.status).toBe('published')
+      })
+      expect(await screen.findByText(/Commercial version published/i)).toBeInTheDocument()
 
-    await user.click(screen.getByRole('tab', { name: /Overview/i }))
-    expect(screen.getByRole('heading', { name: 'Campaign Cover' })).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /Submit for review/i }))
-    await waitFor(() => {
-      expect(campaigns[0]?.status).toBe('submitted')
-    })
-    expect(await screen.findByText(/waiting for MarcatursHub review/i)).toBeInTheDocument()
-  })
+      await user.click(screen.getByRole('tab', { name: /Overview/i }))
+      expect(screen.getByRole('heading', { name: 'Campaign Cover' })).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: /Submit for review/i }))
+      await waitFor(() => {
+        expect(campaigns[0]?.status).toBe('submitted')
+      })
+      expect(await screen.findByText(/waiting for MarcatursHub review/i)).toBeInTheDocument()
+    },
+    15000,
+  )
 
   it('shows published version as read-only', async () => {
     const campaign = draftCampaign({
@@ -533,6 +595,388 @@ describe('Business campaigns desk', () => {
     await userEvent.click(screen.getByRole('tab', { name: /Commercial version/i }))
     expect(await screen.findByText(/published and immutable/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Save draft/i })).not.toBeInTheDocument()
+  })
+
+  describe('commercial version validation (MH-PRE-002)', () => {
+    async function openVersionEditor(overrides: Partial<CampaignVersion> = {}) {
+      const user = userEvent.setup()
+      const campaign = draftCampaign({ id: 60, title: 'Validation Offer' })
+      campaigns = [campaign]
+      versionsByCampaign[60] = [{ ...draftVersion(60, 1), ...overrides }]
+      renderApp('/app/business/campaigns/60')
+      await screen.findByRole('heading', { name: 'Validation Offer' })
+      await user.click(screen.getByRole('tab', { name: /Commercial version/i }))
+      await screen.findByRole('heading', { name: 'Official payment details' })
+    }
+
+    function labelOf(input: HTMLElement): HTMLLabelElement | undefined {
+      return (input as HTMLInputElement).labels?.[0]
+    }
+
+    function errorTextFor(input: HTMLElement): string {
+      const ids = (input.getAttribute('aria-describedby') ?? '').split(' ').filter(Boolean)
+      const errorEl = ids
+        .map((id) => document.getElementById(id))
+        .find((el) => el?.classList.contains('field__error'))
+      return errorEl?.textContent ?? ''
+    }
+
+    it('blocks publishing an incomplete draft with field errors and a focused summary', async () => {
+      const user = userEvent.setup()
+      const confirmSpy = vi.fn(() => true)
+      window.confirm = confirmSpy
+      await openVersionEditor({
+        refund_cancellation_rules: null,
+        payment_destination_name: null,
+        payment_provider: null,
+        payment_account_identifier: null,
+        payment_instructions: null,
+      })
+
+      await user.click(screen.getByRole('button', { name: /Publish version/i }))
+
+      const title = await screen.findByText('Some details need attention before publishing.')
+      const summary = title.closest('.error-summary') as HTMLElement
+      await waitFor(() => expect(summary).toHaveFocus())
+      expect(within(summary).getAllByRole('listitem')).toHaveLength(5)
+      expect(within(summary).getByRole('link', { name: 'Account name' })).toBeInTheDocument()
+
+      const accountName = screen.getByLabelText(/^Account name/i)
+      expect(accountName).toHaveAttribute('aria-invalid', 'true')
+      expect(errorTextFor(accountName)).toBe('Account name is required to publish.')
+      const accountId = screen.getByLabelText(/^Account number or payment ID/i)
+      expect(errorTextFor(accountId)).toBe('Account number or payment ID is required to publish.')
+      expect(errorTextFor(screen.getByLabelText(/^Bank or payment provider/i))).toMatch(
+        /required to publish/,
+      )
+      expect(errorTextFor(screen.getByLabelText(/^Payment instructions/i))).toMatch(
+        /required to publish/,
+      )
+      expect(errorTextFor(screen.getByLabelText(/^Refund \/ cancellation rules/i))).toMatch(
+        /required to publish/,
+      )
+
+      expect(screen.queryByText('The given data was invalid.')).not.toBeInTheDocument()
+      expect(confirmSpy).not.toHaveBeenCalled()
+      expect(publishCalls).toBe(0)
+
+      await user.click(within(summary).getByRole('link', { name: 'Account name' }))
+      expect(accountName).toHaveFocus()
+
+      await user.type(accountName, 'Ada Solar Ltd')
+      expect(accountName).not.toHaveAttribute('aria-invalid')
+      expect(within(summary).getAllByRole('listitem')).toHaveLength(4)
+    })
+
+    it('maps the real 400 validation_error response onto the matching fields', async () => {
+      const user = userEvent.setup()
+      window.confirm = () => true
+      server.use(
+        http.post('/api/v1/campaigns/:id/versions/:version/publish', () =>
+          HttpResponse.json(
+            {
+              success: false,
+              error: {
+                code: 'validation_error',
+                message: 'The given data was invalid.',
+                details: {
+                  payment_provider: ['The payment provider field is required.'],
+                  commission_payment_deadline_days: [
+                    'The commission payment deadline days field must not be greater than 7.',
+                  ],
+                },
+              },
+            },
+            { status: 400 },
+          ),
+        ),
+      )
+      await openVersionEditor()
+
+      await user.click(screen.getByRole('button', { name: /Publish version/i }))
+
+      const title = await screen.findByText('Some details need attention before publishing.')
+      const summary = title.closest('.error-summary') as HTMLElement
+      await waitFor(() => expect(summary).toHaveFocus())
+      expect(within(summary).getAllByRole('listitem')).toHaveLength(2)
+
+      const provider = screen.getByLabelText(/^Bank or payment provider/i)
+      expect(provider).toHaveAttribute('aria-invalid', 'true')
+      expect(errorTextFor(provider)).toBe('Bank or payment provider is required to publish.')
+      const deadline = screen.getByLabelText(/^Commission payment deadline/i)
+      expect(errorTextFor(deadline)).toBe(
+        'Commission payment deadline must be between 1 and 7 days.',
+      )
+      expect(screen.queryByText('The given data was invalid.')).not.toBeInTheDocument()
+      expect(versionsByCampaign[60]?.[0]?.status).toBe('draft')
+    })
+
+    it('test double returns the production validation_error shape for incomplete drafts', async () => {
+      campaigns = [draftCampaign({ id: 61 })]
+      versionsByCampaign[61] = [
+        { ...draftVersion(61, 1), payment_provider: null, price_amount: null },
+      ]
+      const invalid = await fetch(
+        `${window.location.origin}/api/v1/campaigns/61/versions/1/publish`,
+        { method: 'POST' },
+      )
+      expect(invalid.status).toBe(400)
+      const body = (await invalid.json()) as {
+        error: { code: string; message: string; details: Record<string, string[]> }
+      }
+      expect(body.error.code).toBe('validation_error')
+      expect(body.error.message).toBe('The given data was invalid.')
+      expect(Object.keys(body.error.details).sort()).toEqual(['payment_provider', 'price_amount'])
+    })
+
+    it('marks required-to-publish fields and switches conditional commission fields', async () => {
+      const user = userEvent.setup()
+      await openVersionEditor()
+
+      for (const label of [
+        /^Product \/ service name/i,
+        /^Pricing method/i,
+        /^Commission type/i,
+        /^Commission trigger/i,
+        /^Commission payment deadline/i,
+        /^Refund \/ cancellation rules/i,
+        /^Account name/i,
+        /^Bank or payment provider/i,
+        /^Account number or payment ID/i,
+        /^Payment instructions/i,
+        /^Price amount/i,
+        /^Commission rate/i,
+      ]) {
+        expect(labelOf(screen.getByLabelText(label))).toHaveTextContent(/required to publish/i)
+      }
+      for (const label of [/^Service area/i, /^Product description/i, /^Approved claims/i]) {
+        expect(labelOf(screen.getByLabelText(label))).not.toHaveTextContent(/required/i)
+      }
+      const contact = screen.getByLabelText(/^Contact for payment questions/i)
+      expect(labelOf(contact)).toHaveTextContent('(optional)')
+      expect(labelOf(contact)).not.toHaveTextContent(/required/i)
+
+      expect(screen.queryByLabelText(/^Commission amount/i)).not.toBeInTheDocument()
+      expect(screen.queryByLabelText(/^Trigger description/i)).not.toBeInTheDocument()
+
+      await user.selectOptions(screen.getByLabelText(/^Commission type/i), 'fixed')
+      expect(screen.queryByLabelText(/^Commission rate/i)).not.toBeInTheDocument()
+      const amount = screen.getByLabelText(/^Commission amount/i)
+      expect(labelOf(amount)).toHaveTextContent(/required to publish/i)
+      await user.type(amount, '5,000')
+
+      await user.click(screen.getByRole('button', { name: /Save draft/i }))
+      await waitFor(() => expect(versionPatches).toHaveLength(1))
+      expect(versionPatches[0]?.commission_type).toBe('fixed')
+      expect(versionPatches[0]?.commission_amount).toBe(5000)
+      expect(versionPatches[0]?.commission_rate).toBeNull()
+      expect(await screen.findByText('Draft version saved.')).toBeInTheDocument()
+    })
+
+    it('parses formatted money and clears obsolete pricing and trigger values', async () => {
+      const user = userEvent.setup()
+      await openVersionEditor({
+        commission_trigger: 'other',
+        commission_trigger_description: 'When installation is signed off',
+      })
+
+      const description = screen.getByLabelText(/^Trigger description/i)
+      expect(labelOf(description)).toHaveTextContent(/required to publish/i)
+
+      const price = screen.getByLabelText(/^Price amount/i)
+      await user.clear(price)
+      await user.type(price, '₦250,000.50')
+      await user.click(screen.getByRole('button', { name: /Save draft/i }))
+      await waitFor(() => expect(versionPatches).toHaveLength(1))
+      expect(versionPatches[0]?.price_amount).toBe(250000.5)
+      expect(versionPatches[0]?.commission_trigger_description).toBe(
+        'When installation is signed off',
+      )
+
+      await user.selectOptions(screen.getByLabelText(/^Pricing method/i), 'quote')
+      expect(screen.queryByLabelText(/^Price amount/i)).not.toBeInTheDocument()
+      await user.selectOptions(
+        screen.getByLabelText(/^Commission trigger/i),
+        'payment_confirmation',
+      )
+      expect(screen.queryByLabelText(/^Trigger description/i)).not.toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: /Save draft/i }))
+      await waitFor(() => expect(versionPatches).toHaveLength(2))
+      expect(versionPatches[1]?.pricing_method).toBe('quote')
+      expect(versionPatches[1]?.price_amount).toBeNull()
+      expect(versionPatches[1]?.commission_trigger_description).toBeNull()
+    })
+
+    it('rejects invalid numbers instead of saving them as empty values', async () => {
+      const user = userEvent.setup()
+      await openVersionEditor()
+
+      const price = screen.getByLabelText(/^Price amount/i)
+      await user.clear(price)
+      await user.type(price, 'abc')
+      const deadline = screen.getByLabelText(/^Commission payment deadline/i)
+      await user.clear(deadline)
+      await user.type(deadline, 'next week')
+      await user.click(screen.getByRole('button', { name: /Save draft/i }))
+
+      expect(
+        await screen.findByText('Some details need attention before saving.'),
+      ).toBeInTheDocument()
+      expect(errorTextFor(price)).toMatch(/Enter a valid amount/)
+      expect(errorTextFor(deadline)).toBe(
+        'Commission payment deadline must be between 1 and 7 days.',
+      )
+      expect(versionPatches).toHaveLength(0)
+    })
+
+    it('explains and enforces the 1–7 day commission payment deadline', async () => {
+      const user = userEvent.setup()
+      const confirmSpy = vi.fn(() => true)
+      window.confirm = confirmSpy
+      await openVersionEditor()
+
+      const deadline = screen.getByLabelText(/^Commission payment deadline/i)
+      expect(deadline).toHaveAccessibleDescription(/1 to 7\. Seven days is the platform maximum/)
+      expect(screen.queryByText(/365/)).not.toBeInTheDocument()
+
+      for (const value of ['8', '30', '365', '0']) {
+        await user.clear(deadline)
+        await user.type(deadline, value)
+        await user.click(screen.getByRole('button', { name: /Save draft/i }))
+        expect(errorTextFor(deadline)).toBe(
+          'Commission payment deadline must be between 1 and 7 days.',
+        )
+        expect(deadline).toHaveAttribute('aria-invalid', 'true')
+      }
+      expect(versionPatches).toHaveLength(0)
+
+      await user.click(screen.getByRole('button', { name: /Publish version/i }))
+      const summary = (
+        await screen.findByText('Some details need attention before publishing.')
+      ).closest('.error-summary') as HTMLElement
+      await waitFor(() => expect(summary).toHaveFocus())
+      expect(
+        within(summary).getByRole('link', { name: 'Commission payment deadline (days)' }),
+      ).toBeInTheDocument()
+      expect(confirmSpy).not.toHaveBeenCalled()
+      expect(publishCalls).toBe(0)
+
+      await user.clear(deadline)
+      await user.type(deadline, '7 days')
+      expect(deadline).not.toHaveAttribute('aria-invalid')
+      await user.click(screen.getByRole('button', { name: /Save draft/i }))
+      await waitFor(() => expect(versionPatches).toHaveLength(1))
+      expect(versionPatches[0]?.commission_payment_deadline_days).toBe(7)
+    })
+
+    it('shows approved payment terminology with helper text in the editor', async () => {
+      await openVersionEditor()
+      expect(screen.getByLabelText(/^Account name/i)).toHaveAccessibleDescription(
+        /Name exactly as it appears on the account/,
+      )
+      expect(screen.getByLabelText(/^Bank or payment provider/i)).toHaveAccessibleDescription(
+        /GTBank, Access Bank, Moniepoint, OPay/,
+      )
+      expect(screen.getByLabelText(/^Account number or payment ID/i)).toHaveAccessibleDescription(
+        /wallet or merchant ID/,
+      )
+      expect(screen.queryByText(/^Destination name$/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/^Account identifier$/)).not.toBeInTheDocument()
+    })
+
+    it('warns before leaving a draft with unsaved changes', async () => {
+      const user = userEvent.setup()
+      const confirmSpy = vi.fn(() => false)
+      window.confirm = confirmSpy
+      await openVersionEditor()
+
+      await user.click(screen.getByRole('tab', { name: /Overview/i }))
+      expect(confirmSpy).not.toHaveBeenCalled()
+      expect(screen.getByRole('heading', { name: 'Campaign identity' })).toBeInTheDocument()
+
+      await user.click(screen.getByRole('tab', { name: /Commercial version/i }))
+      const productName = await screen.findByLabelText(/^Product \/ service name/i)
+      await user.type(productName, ' Pro')
+
+      await user.click(screen.getByRole('tab', { name: /Overview/i }))
+      expect(confirmSpy).toHaveBeenCalledTimes(1)
+      expect(screen.getByRole('tab', { name: /Commercial version/i })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      )
+      expect(screen.getByLabelText(/^Product \/ service name/i)).toHaveValue('Solar kit Pro')
+
+      confirmSpy.mockReturnValue(true)
+      await user.click(screen.getByRole('tab', { name: /Overview/i }))
+      expect(screen.getByRole('heading', { name: 'Campaign identity' })).toBeInTheDocument()
+    })
+  })
+
+  it('shows a setup checklist derived from campaign state', async () => {
+    campaigns = [draftCampaign({ id: 65, title: 'Checklist Offer' })]
+    versionsByCampaign[65] = []
+    renderApp('/app/business/campaigns/65')
+    const region = await screen.findByRole('region', { name: 'Campaign setup' })
+    const items = within(region).getAllByRole('listitem')
+    expect(items.map((li) => li.textContent?.replace('✓', ''))).toEqual([
+      'Identity: done',
+      'Cover (optional): not done yet',
+      'Commercial terms: not done yet',
+      'Version published: not done yet',
+      'Submitted for review: not done yet',
+    ])
+    await userEvent.click(within(region).getByRole('button', { name: /Open commercial version/i }))
+    expect(screen.getByRole('tab', { name: /Commercial version/i })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+  })
+
+  it('shows category errors against the Category field on campaign identity', async () => {
+    const user = userEvent.setup()
+    campaigns = [draftCampaign({ id: 66, title: 'Identity Offer' })]
+    server.use(
+      http.patch('/api/v1/campaigns/:id', () =>
+        HttpResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'validation_error',
+              message: 'The given data was invalid.',
+              details: { category_id: ['The selected category id is invalid.'] },
+            },
+          },
+          { status: 400 },
+        ),
+      ),
+    )
+    renderApp('/app/business/campaigns/66')
+    await screen.findByRole('heading', { name: 'Campaign identity' })
+    await user.click(screen.getByRole('button', { name: /Save identity/i }))
+    const category = screen.getByLabelText('Category')
+    await waitFor(() => expect(category).toHaveAttribute('aria-invalid', 'true'))
+    expect(category).toHaveAccessibleDescription('The selected category id is invalid.')
+    expect(screen.queryByText('The given data was invalid.')).not.toBeInTheDocument()
+
+    server.use(
+      http.patch('/api/v1/campaigns/:id', () =>
+        HttpResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'business_validation',
+              message: 'This category cannot be used for a campaign.',
+            },
+          },
+          { status: 422 },
+        ),
+      ),
+    )
+    await user.click(screen.getByRole('button', { name: /Save identity/i }))
+    await waitFor(() =>
+      expect(category).toHaveAccessibleDescription('This category cannot be used for a campaign.'),
+    )
   })
 
   it('handles not-found campaign detail', async () => {
