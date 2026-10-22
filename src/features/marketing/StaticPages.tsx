@@ -20,8 +20,8 @@ export function HowItWorksPage() {
                 eyebrow="How it works"
                 title="The path from opportunity to commission."
               >
-                The homepage explains why people join. This page explains how the marketplace
-                operates — with clear payment boundaries and a commercial record that matters.
+                Let's explains how the marketplace
+                operates, with clear payment boundaries and a commercial record that matters.
               </SectionHeading>
             </div>
             <MediaFrame src={images.collaboration.src} alt={images.collaboration.alt} wide />
@@ -41,7 +41,7 @@ export function HowItWorksPage() {
             },
             {
               title: '3. The customer pays the Business directly',
-              body: 'When a customer is ready to buy, payment goes to the Business. MarcatursHub does not receive or hold customer purchase funds in the MVP.',
+              body: 'When a customer is ready to buy, payment goes to the Business. MarcatursHub does not receive or hold customer purchase funds.',
             },
             {
               title: '4. A Deal records the commercial moment',
@@ -49,7 +49,7 @@ export function HowItWorksPage() {
             },
             {
               title: '5. Commission becomes due — and is paid directly',
-              body: 'Once qualifying payment is confirmed, commission liability becomes due under the published campaign terms. The standard expectation is payment within 7 calendar days unless the applicable published terms provide otherwise. The Business pays the Ambassador directly. MarcatursHub tracks status and reminders; it does not hold or pay commission money in the MVP.',
+              body: 'Once qualifying payment is confirmed, commission liability becomes due under the published campaign terms. The standard expectation is payment within 7 calendar days unless the applicable published terms provide otherwise. The Business pays the Ambassador directly. MarcatursHub tracks status and reminders; it does not hold or pay commission money.',
             },
           ].map((step) => (
             <article key={step.title} className="how-step">
@@ -142,7 +142,7 @@ export function ForBusinessesPage() {
               },
               {
                 title: 'Pay commissions directly',
-                body: 'After you confirm a qualifying payment, commission becomes due under your published terms. You pay the Ambassador directly. MarcatursHub does not hold commission funds in the MVP.',
+                body: 'After you confirm a qualifying payment, commission becomes due under your published terms. You pay the Ambassador directly. MarcatursHub does not hold commission funds.',
               },
             ].map((item) => (
               <article key={item.title} className="feature-point">
@@ -427,26 +427,38 @@ export function ContactPage() {
     <>
       <PageMeta
         title="Contact"
-        description="Contact Tarizefa Limited / MarcatursHub. Public support channels will be confirmed by the company."
+        description="Contact MarcatursHub for general enquiries, direct communication, and support."
       />
       <section className="page-hero page-hero--visual">
         <div className="container split-visual">
           <div className="stack">
-            <SectionHeading as="h1" eyebrow="Contact" title="Talk to MarcatursHub.">
-              MarcatursHub is operated by Tarizefa Limited. For product, partnership or legal
-              enquiries, use the company contact channels published by Tarizefa Limited /
-              MarcatursHub operations.
+            <SectionHeading as="h1" eyebrow="Contact" title="Contact MarcatursHub">
+              Reach MarcatursHub using the email address that matches your enquiry.
             </SectionHeading>
-            <div className="alert alert--info">
-              <strong>Contact details pending company confirmation.</strong> A public support email,
-              phone number and registered address have not been finalised in this repository. We
-              will not invent contact details. When confirmed, they will appear here and in the
-              Terms and Privacy pages.
+            <div className="prose-block">
+              <h2>General Enquiries</h2>
+              <p>Questions about MarcatursHub, the marketplace and general business enquiries.</p>
+              <p>
+                <a href="mailto:info@marcaturshub.com.ng">info@marcaturshub.com.ng</a>
+              </p>
+            </div>
+            <div className="prose-block">
+              <h2>Direct Contact</h2>
+              <p>Direct communication and business discussions.</p>
+              <p>
+                <a href="mailto:contact@marcaturshub.com.ng">contact@marcaturshub.com.ng</a>
+              </p>
+            </div>
+            <div className="prose-block">
+              <h2>Support</h2>
+              <p>Help with accounts, campaigns, deals and using the platform.</p>
+              <p>
+                <a href="mailto:support@marcaturshub.com.ng">support@marcaturshub.com.ng</a>
+              </p>
             </div>
             <p className="muted-note">
-              Looking for product help in the meantime? Review the <Link to="/faq">FAQ</Link>,{' '}
-              <Link to="/how-it-works">How it works</Link>, or create an account to use in-app
-              support paths once available.
+              Looking for product explanations? Review the <Link to="/faq">FAQ</Link> or{' '}
+              <Link to="/how-it-works">How it works</Link>.
             </p>
           </div>
           <MediaFrame src={images.support.src} alt={images.support.alt} />
@@ -476,11 +488,11 @@ export function FaqPage() {
     },
     {
       q: 'Who pays the ambassador?',
-      a: 'You do — directly. MarcatursHub tracks commission status and reminders. It does not hold or pay commission money in the MVP.',
+      a: 'You do — directly. MarcatursHub tracks commission status and reminders. It does not hold or pay commission money.',
     },
     {
       q: 'Does MarcatursHub hold customer money?',
-      a: 'No. Customers pay your business directly. MarcatursHub does not receive or hold customer purchase funds in the MVP.',
+      a: 'No. Customers pay your business directly. MarcatursHub does not receive or hold customer purchase funds.',
     },
     {
       q: 'Can I choose my commission terms?',
@@ -523,7 +535,7 @@ export function FaqPage() {
     },
     {
       q: 'What happens if a Business does not pay?',
-      a: 'MarcatursHub tracks deadlines and may support reminders, reports and dispute processes. The platform does not guarantee commission recovery and does not pay commissions from its own funds in the MVP.',
+      a: 'MarcatursHub tracks deadlines and may support reminders, reports and dispute processes. The platform does not guarantee commission recovery and does not pay commissions from its own funds.',
     },
   ]
 

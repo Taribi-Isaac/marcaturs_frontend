@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { companySocialLinks } from '@/app/config/socialLinks'
+import { footerClickScrollMode } from '@/app/layout/footerScroll'
 import { useAuth } from '@/features/auth/authContext'
 import { Button } from '@/shared/ui/Button'
 
@@ -11,10 +12,50 @@ const publicLinks = [
   { to: '/for-ambassadors', label: 'For ambassadors' },
 ]
 
+function scrollDocumentToTop() {
+  const root = document.documentElement
+  const previous = root.style.scrollBehavior
+  root.style.scrollBehavior = 'auto'
+  window.scrollTo(0, 0)
+  root.style.scrollBehavior = previous
+}
+
+function FooterRouteLink({
+  to,
+  children,
+  onClick,
+}: {
+  to: string
+  children: string
+  onClick: (event: MouseEvent<HTMLAnchorElement>) => void
+}) {
+  return (
+    <Link to={to} onClick={onClick}>
+      {children}
+    </Link>
+  )
+}
+
 export function PublicShell() {
   const { status, user, logout } = useAuth()
+  const location = useLocation()
   const [open, setOpen] = useState(false)
+  const footerScrollRequest = useRef(false)
   const authenticated = status === 'authenticated' || status === 'restricted'
+
+  useLayoutEffect(() => {
+    if (!footerScrollRequest.current) return
+    footerScrollRequest.current = false
+    if (location.hash) return
+    scrollDocumentToTop()
+  }, [location.hash, location.key, location.pathname, location.search])
+
+  function onFooterRouteClick(event: MouseEvent<HTMLAnchorElement>) {
+    const destination = new URL(event.currentTarget.href)
+    const mode = footerClickScrollMode(event, location, destination)
+    if (mode === 'immediate') scrollDocumentToTop()
+    if (mode === 'on-next-location') footerScrollRequest.current = true
+  }
 
   const authActions =
     authenticated && user ? (
@@ -106,22 +147,26 @@ export function PublicShell() {
               MarcatursHub
             </div>
             <p className="site-footer__intro">
-              More reach for businesses. More opportunities for independent ambassadors. Customers
-              pay businesses directly. MarcatursHub coordinates the commercial record, not the
-              money.
+              More reach for businesses. More opportunities for independent ambassadors. Businesses can now easily connect with ambassadors to promote their products and services.
             </p>
           </div>
           <div>
             <h3>Explore</h3>
             <ul>
               <li>
-                <Link to="/discover">Discover</Link>
+                <FooterRouteLink to="/discover" onClick={onFooterRouteClick}>
+                  Discover
+                </FooterRouteLink>
               </li>
               <li>
-                <Link to="/how-it-works">How it works</Link>
+                <FooterRouteLink to="/how-it-works" onClick={onFooterRouteClick}>
+                  How it works
+                </FooterRouteLink>
               </li>
               <li>
-                <Link to="/faq">FAQ</Link>
+                <FooterRouteLink to="/faq" onClick={onFooterRouteClick}>
+                  FAQ
+                </FooterRouteLink>
               </li>
             </ul>
           </div>
@@ -129,13 +174,19 @@ export function PublicShell() {
             <h3>Participate</h3>
             <ul>
               <li>
-                <Link to="/for-businesses">For businesses</Link>
+                <FooterRouteLink to="/for-businesses" onClick={onFooterRouteClick}>
+                  For businesses
+                </FooterRouteLink>
               </li>
               <li>
-                <Link to="/for-ambassadors">For ambassadors</Link>
+                <FooterRouteLink to="/for-ambassadors" onClick={onFooterRouteClick}>
+                  For ambassadors
+                </FooterRouteLink>
               </li>
               <li>
-                <Link to="/register">Create account</Link>
+                <FooterRouteLink to="/register" onClick={onFooterRouteClick}>
+                  Create account
+                </FooterRouteLink>
               </li>
             </ul>
           </div>
@@ -143,16 +194,24 @@ export function PublicShell() {
             <h3>Company</h3>
             <ul>
               <li>
-                <Link to="/about">About</Link>
+                <FooterRouteLink to="/about" onClick={onFooterRouteClick}>
+                  About
+                </FooterRouteLink>
               </li>
               <li>
-                <Link to="/contact">Contact</Link>
+                <FooterRouteLink to="/contact" onClick={onFooterRouteClick}>
+                  Contact
+                </FooterRouteLink>
               </li>
               <li>
-                <Link to="/terms">Terms</Link>
+                <FooterRouteLink to="/terms" onClick={onFooterRouteClick}>
+                  Terms
+                </FooterRouteLink>
               </li>
               <li>
-                <Link to="/privacy">Privacy</Link>
+                <FooterRouteLink to="/privacy" onClick={onFooterRouteClick}>
+                  Privacy
+                </FooterRouteLink>
               </li>
             </ul>
           </div>
@@ -184,8 +243,7 @@ export function PublicShell() {
           </div>
         </div>
         <div className="container site-footer__meta">
-          © {new Date().getFullYear()} MarcatursHub. Marketplace coordination — not a payment
-          wallet.
+          © {new Date().getFullYear()} MarcatursHub. Marketplace coordination.
         </div>
       </footer>
     </>

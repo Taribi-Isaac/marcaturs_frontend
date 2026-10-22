@@ -1,8 +1,9 @@
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
+import { footerClickScrollMode } from '@/app/layout/footerScroll'
 import { AppProviders } from '@/app/providers'
 import { createQueryClient } from '@/app/queryClient'
 import { AppRouter } from '@/app/router'
@@ -132,22 +133,161 @@ describe('public header mobile menu (MH-REL-001)', () => {
   })
 })
 
-describe('public footer social links (MH-REL-001)', () => {
-  it('lists Facebook, Instagram, and LinkedIn with accessible names', async () => {
+describe('public footer social links', () => {
+  it('lists the five official profiles as safe external links', async () => {
     renderApp('/about')
     await screen.findByRole('heading', { name: /about/i }).catch(() => undefined)
 
     const footer = document.querySelector('footer.site-footer') as HTMLElement
     expect(footer).toBeTruthy()
+
+    const profiles = [
+      ['Facebook', 'https://www.facebook.com/marcaturshub'],
+      ['Instagram', 'https://www.instagram.com/marcaturshub'],
+      ['LinkedIn', 'https://www.linkedin.com/company/marcaturshub'],
+      ['TikTok', 'https://www.tiktok.com/@marcaturshub'],
+      ['X', 'https://x.com/MarcatursHub'],
+    ] as const
+
+    for (const [label, href] of profiles) {
+      const link = within(footer).getByRole('link', { name: `${label} (opens in a new tab)` })
+      expect(link).toHaveAttribute('href', href)
+      expect(link).toHaveAttribute('target', '_blank')
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+      expect(link).toHaveTextContent(label)
+    }
+
+    expect(within(footer).getAllByRole('link', { name: /\(opens in a new tab\)/ })).toHaveLength(5)
+    expect(within(footer).queryByText(/awaiting confirmation/i)).not.toBeInTheDocument()
+  })
+})
+
+function footer() {
+  return document.querySelector('footer.site-footer') as HTMLElement
+}
+
+const plainClick = {
+  defaultPrevented: false,
+  button: 0,
+  metaKey: false,
+  altKey: false,
+  ctrlKey: false,
+  shiftKey: false,
+}
+
+describe('footer internal navigation scroll', () => {
+  it('keeps a destination query string when deciding to scroll', () => {
+    const current = { pathname: '/about', search: '?ref=campaign', hash: '' }
+    const destination = new URL('http://localhost/faq?topic=payment')
+    expect(footerClickScrollMode(plainClick, current, destination)).toBe('on-next-location')
+    expect(destination.search).toBe('?topic=payment')
+  })
+
+  it('leaves hash destinations and modified clicks unchanged', () => {
+    const current = { pathname: '/about', search: '', hash: '' }
     expect(
-      within(footer).getByLabelText(/Facebook \(link destination awaiting confirmation\)/i),
-    ).toBeInTheDocument()
+      footerClickScrollMode(plainClick, current, new URL('http://localhost/faq#answers')),
+    ).toBe('ignore')
     expect(
-      within(footer).getByLabelText(/Instagram \(link destination awaiting confirmation\)/i),
-    ).toBeInTheDocument()
-    expect(
-      within(footer).getByLabelText(/LinkedIn \(link destination awaiting confirmation\)/i),
-    ).toBeInTheDocument()
-    expect(within(footer).queryByRole('link', { name: /Facebook/i })).not.toBeInTheDocument()
+      footerClickScrollMode(
+        { ...plainClick, ctrlKey: true },
+        current,
+        new URL('http://localhost/faq'),
+      ),
+    ).toBe('ignore')
+  })
+
+  it('opens the footer destination at the top and preserves that destination URL', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const user = userEvent.setup()
+    renderApp('/about?ref=campaign')
+
+    const link = within(footer()).getByRole('link', { name: 'How it works' })
+    expect(link).toHaveAttribute('href', '/how-it-works')
+    await user.click(link)
+
+    await waitFor(() => expect(window.location.pathname).toBe('/how-it-works'))
+    expect(window.location.search).toBe('')
+    expect(window.location.hash).toBe('')
+    expect(scrollTo).toHaveBeenCalledWith(0, 0)
+    expect(document.documentElement.style.scrollBehavior).toBe('')
+    const main = document.getElementById('main') as HTMLElement
+    expect(main).toBeVisible()
+    expect(within(main).getByRole('heading', { level: 1 })).toBeVisible()
+
+    scrollTo.mockClear()
+    window.history.back()
+    await waitFor(() => expect(window.location.pathname).toBe('/about'))
+    expect(window.location.search).toBe('?ref=campaign')
+    expect(scrollTo).not.toHaveBeenCalled()
+    scrollTo.mockRestore()
+  })
+
+  it('scrolls to the top when the footer link targets the current page', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const user = userEvent.setup()
+    renderApp('/faq')
+
+    const link = within(footer()).getByRole('link', { name: 'FAQ' })
+    link.focus()
+    await user.keyboard('{Enter}')
+
+    expect(window.location.pathname).toBe('/faq')
+    expect(scrollTo).toHaveBeenCalledWith(0, 0)
+    expect(document.getElementById('main')).toBeVisible()
+    scrollTo.mockRestore()
+  })
+
+  it('does not reset scroll for header links, hash links, or external profiles', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const user = userEvent.setup()
+    renderApp('/about')
+
+    const primary = screen.getByRole('navigation', { name: 'Primary' })
+    await user.click(within(primary).getByRole('link', { name: 'Discover' }))
+    await waitFor(() => expect(window.location.pathname).toBe('/discover'))
+    expect(scrollTo).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('link', { name: 'Skip to main content' }))
+    expect(window.location.hash).toBe('#main')
+    expect(scrollTo).not.toHaveBeenCalled()
+
+    const social = within(footer()).getByRole('link', { name: 'Facebook (opens in a new tab)' })
+    social.addEventListener('click', (event) => event.preventDefault(), { once: true })
+    await user.click(social)
+    expect(social).toHaveAttribute('href', 'https://www.facebook.com/marcaturshub')
+    expect(social).toHaveAttribute('target', '_blank')
+    expect(window.location.pathname).toBe('/discover')
+    expect(scrollTo).not.toHaveBeenCalled()
+    scrollTo.mockRestore()
+  })
+
+  it('opens Contact from the footer at the top with the approved email links', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const user = userEvent.setup()
+    renderApp('/about')
+
+    await user.click(within(footer()).getByRole('link', { name: 'Contact' }))
+    await waitFor(() => expect(window.location.pathname).toBe('/contact'))
+
+    const main = document.getElementById('main') as HTMLElement
+    const addresses = [
+      'info@marcaturshub.com.ng',
+      'contact@marcaturshub.com.ng',
+      'support@marcaturshub.com.ng',
+    ] as const
+    for (const address of addresses) {
+      expect(within(main).getByRole('link', { name: address })).toHaveAttribute(
+        'href',
+        `mailto:${address}`,
+      )
+    }
+    expect(within(main).getByRole('link', { name: 'FAQ' })).toHaveAttribute('href', '/faq')
+    expect(within(main).getByRole('link', { name: 'How it works' })).toHaveAttribute(
+      'href',
+      '/how-it-works',
+    )
+    expect(scrollTo).toHaveBeenCalledWith(0, 0)
+    scrollTo.mockRestore()
   })
 })

@@ -6,6 +6,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { GuestOnly } from '@/features/auth/RequireAuth'
 import { useAuth } from '@/features/auth/authContext'
 import { homePathForRole } from '@/features/auth/authHelpers'
+import { PasswordField } from '@/features/auth/PasswordField'
 import { registerFieldErrorsFromApi } from '@/features/auth/registerFieldErrors'
 import { ApiClientError } from '@/shared/api/errors'
 import { Button } from '@/shared/ui/Button'
@@ -111,30 +112,22 @@ export function RegisterPage() {
               <p className="field__error">{form.formState.errors.email.message}</p>
             ) : null}
           </div>
-          <div className="field">
-            <label htmlFor="reg-password">Password</label>
-            <input
-              id="reg-password"
-              type="password"
-              autoComplete="new-password"
-              {...form.register('password')}
-            />
-            {form.formState.errors.password ? (
-              <p className="field__error">{form.formState.errors.password.message}</p>
-            ) : null}
-          </div>
-          <div className="field">
-            <label htmlFor="reg-password2">Confirm password</label>
-            <input
-              id="reg-password2"
-              type="password"
-              autoComplete="new-password"
-              {...form.register('password_confirmation')}
-            />
-            {form.formState.errors.password_confirmation ? (
-              <p className="field__error">{form.formState.errors.password_confirmation.message}</p>
-            ) : null}
-          </div>
+          <PasswordField
+            id="reg-password"
+            label="Password"
+            autoComplete="new-password"
+            visibilityName="password"
+            error={form.formState.errors.password?.message}
+            registration={form.register('password')}
+          />
+          <PasswordField
+            id="reg-password2"
+            label="Confirm password"
+            autoComplete="new-password"
+            visibilityName="confirm password"
+            error={form.formState.errors.password_confirmation?.message}
+            registration={form.register('password_confirmation')}
+          />
           <Button type="submit" disabled={form.formState.isSubmitting}>
             {form.formState.isSubmitting ? 'Creating account…' : 'Create account'}
           </Button>

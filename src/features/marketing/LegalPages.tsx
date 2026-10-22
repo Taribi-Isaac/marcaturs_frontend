@@ -14,11 +14,11 @@ type LegalSection = {
 function LegalNotice() {
   return (
     <div className="legal-notice" role="note">
-      <p>
+      {/* <p>
         This document is prepared for the MarcatursHub operating model and remains{' '}
         <strong>subject to final legal review</strong> by Nigerian counsel. It is not legal advice
         and does not claim certification of compliance.
-      </p>
+      </p> */}
     </div>
   )
 }
@@ -438,10 +438,10 @@ export function TermsPage() {
             liable for lost sales, unpaid commissions between participants, customer disputes with
             Businesses, or losses arising from user misconduct.
           </p>
-          <p className="counsel-flag">
+          {/* <p className="counsel-flag">
             Counsel review item: final liability caps, exclusions and consumer-law carve-outs must
             be confirmed before public launch.
-          </p>
+          </p> */}
         </>
       ),
     },
@@ -455,9 +455,9 @@ export function TermsPage() {
             Campaign content, promotion activity, misrepresentation, unlawful conduct or breach of
             these Terms, to the extent permitted by law.
           </p>
-          <p className="counsel-flag">
+          {/* <p className="counsel-flag">
             Counsel review item: indemnity scope and enforceability under Nigerian law.
-          </p>
+          </p> */}
         </>
       ),
     },
@@ -484,10 +484,10 @@ export function TermsPage() {
             subject to final confirmation by company counsel. Dispute venue and jurisdiction details
             will be confirmed by counsel and published here before relying on them for enforcement.
           </p>
-          <p className="counsel-flag">
+          {/* <p className="counsel-flag">
             Counsel review item: governing law, venue and dispute-resolution mechanism (including
             any ADR). Do not invent a court address.
-          </p>
+          </p> */}
         </>
       ),
     },
@@ -498,13 +498,12 @@ export function TermsPage() {
         <>
           <p>
             MarcatursHub is operated by <strong>Tarizefa Limited</strong>. For Terms-related
-            enquiries, use the contact channels published on the <Link to="/contact">Contact</Link>{' '}
-            page once company contact details are confirmed.
+            enquiries, use the addresses published on the <Link to="/contact">Contact</Link> page.
           </p>
-          <p className="counsel-flag">
-            Company confirmation item: public legal/support email, phone and registered address are
-            not yet verified in-repository and must not be invented.
-          </p>
+          {/* <p className="counsel-flag">
+            Company confirmation item: a public phone number and registered address are not
+            published here and must not be invented.
+          </p> */}
         </>
       ),
     },
@@ -515,7 +514,7 @@ export function TermsPage() {
       title="Terms of Use"
       description="Terms of Use for the MarcatursHub marketplace operated by Tarizefa Limited."
       effectiveDate={TERMS_EFFECTIVE}
-      version="1.0-draft"
+      version="1.0"
       sections={sections}
     />
   )
@@ -532,11 +531,11 @@ export function PrivacyPage() {
             This Privacy Policy explains how Tarizefa Limited (“MarcatursHub”, “we”, “us”) processes
             personal data in connection with the MarcatursHub Platform.
           </p>
-          <p className="counsel-flag">
+          {/* <p className="counsel-flag">
             Company confirmation item: registered address, privacy contact email and any Data
             Protection Officer designation remain pending verification and must be added when
             confirmed.
-          </p>
+          </p> */}
         </>
       ),
     },
@@ -629,10 +628,10 @@ export function PrivacyPage() {
             legitimate interests that do not override your rights, or consent where genuinely
             required.
           </p>
-          <p className="counsel-flag">
+          {/* <p className="counsel-flag">
             Counsel review item: map each processing purpose to a specific NDPA lawful basis before
             launch. Do not treat “consent” as the default for all processing.
-          </p>
+          </p> */}
         </>
       ),
     },
@@ -724,8 +723,8 @@ export function PrivacyPage() {
             or other competent authority.
           </p>
           <p>
-            To exercise rights, use the contact channels published on the{' '}
-            <Link to="/contact">Contact</Link> page once confirmed.
+            To exercise these rights, use the addresses published on the{' '}
+            <Link to="/contact">Contact</Link> page.
           </p>
         </>
       ),
@@ -767,10 +766,10 @@ export function PrivacyPage() {
             The Platform is directed to businesses and independent commercial participants, not to
             children. We do not knowingly collect children’s data for marketplace participation.
           </p>
-          <p className="counsel-flag">
+          {/* <p className="counsel-flag">
             Counsel review item: confirm any minimum age threshold and eligibility wording for
             Nigerian launch.
-          </p>
+          </p> */}
         </>
       ),
     },
@@ -806,12 +805,11 @@ export function PrivacyPage() {
         <>
           <p>
             Privacy requests should be directed to Tarizefa Limited / MarcatursHub through the
-            channels published on the <Link to="/contact">Contact</Link> page once company contact
-            details are confirmed.
+            addresses published on the <Link to="/contact">Contact</Link> page.
           </p>
-          <p className="counsel-flag">
+          {/* <p className="counsel-flag">
             Company confirmation item: privacy inbox / DPO identity must not be invented.
-          </p>
+          </p> */}
         </>
       ),
     },
@@ -822,7 +820,7 @@ export function PrivacyPage() {
       title="Privacy Policy"
       description="Privacy Policy for MarcatursHub describing how Tarizefa Limited processes personal data."
       effectiveDate={PRIVACY_EFFECTIVE}
-      version="1.0-draft"
+      version="1.0"
       sections={sections}
     />
   )

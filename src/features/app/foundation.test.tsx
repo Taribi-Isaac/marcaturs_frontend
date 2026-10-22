@@ -271,7 +271,7 @@ describe('auth and role gates', () => {
     await user.type(screen.getByLabelText(/full name/i), 'Ada Ambassador')
     await user.type(screen.getByLabelText(/^email$/i), 'amb@example.com')
     await user.type(screen.getByLabelText(/^password$/i), 'DemoPass123!')
-    await user.type(screen.getByLabelText(/confirm password/i), 'DemoPass123!')
+    await user.type(screen.getByLabelText(/^confirm password$/i), 'DemoPass123!')
     await user.click(screen.getByRole('button', { name: /create account/i }))
     // GuestOnly briefly renders the gate inside the public shell before the workspace
     // route commits, so wait for the workspace route's gate rather than the first heading.

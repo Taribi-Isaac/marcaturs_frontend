@@ -67,11 +67,11 @@ export function BusinessDealListPage() {
           </div>
         </header>
 
-        <div className="alert alert--info">
+        {/* <div className="alert alert--info">
           List filters for evidence and commission states are not yet supported by the Deal API.
           Attention labels use Deal status, open disputes, and linked commission records where
           available. Open a Deal to review payment evidence.
-        </div>
+        </div> */}
 
         {list.isLoading ? <LoadingState label="Loading deals…" /> : null}
         {list.isError ? (
