@@ -24,6 +24,7 @@ import { CampaignListPage } from '@/features/business-campaigns/CampaignListPage
 import { CampaignCreatePage } from '@/features/business-campaigns/CampaignCreatePage'
 import { BusinessCampaignDetailPage } from '@/features/business-campaigns/BusinessCampaignDetailPage'
 import { AmbassadorDiscoverPage } from '@/features/ambassador-deals/AmbassadorDiscoverPage'
+import { SavedCampaignsPage } from '@/features/campaign-bookmarks/SavedCampaignsPage'
 import { AmbassadorHomePage } from '@/features/ambassador-deals/AmbassadorHomePage'
 import { DealListPage } from '@/features/ambassador-deals/DealListPage'
 import { DealDetailPage } from '@/features/ambassador-deals/DealDetailPage'
@@ -159,6 +160,10 @@ export function AppRouter() {
             {
               path: 'discover',
               element: <AmbassadorDiscoverPage />,
+            },
+            {
+              path: 'saved',
+              element: <SavedCampaignsPage />,
             },
             {
               path: 'deals',
