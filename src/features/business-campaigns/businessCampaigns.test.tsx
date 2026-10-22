@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { http, HttpResponse } from 'msw'
@@ -841,8 +841,7 @@ describe('Business campaigns desk', () => {
       expect(screen.queryByText(/365/)).not.toBeInTheDocument()
 
       for (const value of ['8', '30', '365', '0']) {
-        await user.clear(deadline)
-        await user.type(deadline, value)
+        fireEvent.change(deadline, { target: { value } })
         await user.click(screen.getByRole('button', { name: /Save draft/i }))
         expect(errorTextFor(deadline)).toBe(
           'Commission payment deadline must be between 1 and 7 days.',
@@ -862,8 +861,7 @@ describe('Business campaigns desk', () => {
       expect(confirmSpy).not.toHaveBeenCalled()
       expect(publishCalls).toBe(0)
 
-      await user.clear(deadline)
-      await user.type(deadline, '7 days')
+      fireEvent.change(deadline, { target: { value: '7 days' } })
       expect(deadline).not.toHaveAttribute('aria-invalid')
       await user.click(screen.getByRole('button', { name: /Save draft/i }))
       await waitFor(() => expect(versionPatches).toHaveLength(1))

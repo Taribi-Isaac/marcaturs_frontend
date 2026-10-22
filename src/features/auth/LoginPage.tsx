@@ -6,6 +6,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { GuestOnly } from '@/features/auth/RequireAuth'
 import { useAuth } from '@/features/auth/authContext'
 import { homePathForRole } from '@/features/auth/authHelpers'
+import { PasswordField } from '@/features/auth/PasswordField'
 import { ApiClientError } from '@/shared/api/errors'
 import { Button } from '@/shared/ui/Button'
 import { PageMeta } from '@/shared/ui/States'
@@ -79,18 +80,14 @@ export function LoginPage() {
               <p className="field__error">{form.formState.errors.email.message}</p>
             ) : null}
           </div>
-          <div className="field">
-            <label htmlFor="login-password">Password</label>
-            <input
-              id="login-password"
-              type="password"
-              autoComplete="current-password"
-              {...form.register('password')}
-            />
-            {form.formState.errors.password ? (
-              <p className="field__error">{form.formState.errors.password.message}</p>
-            ) : null}
-          </div>
+          <PasswordField
+            id="login-password"
+            label="Password"
+            autoComplete="current-password"
+            visibilityName="password"
+            error={form.formState.errors.password?.message}
+            registration={form.register('password')}
+          />
           <Button type="submit" disabled={form.formState.isSubmitting}>
             {form.formState.isSubmitting ? 'Signing in…' : 'Sign in'}
           </Button>

@@ -227,7 +227,7 @@ describe('participant session authentication contract', () => {
       await user.type(screen.getByLabelText(/full name/i), 'New Participant')
       await user.type(screen.getByLabelText(/^email$/i), 'new@example.com')
       await user.type(screen.getByLabelText(/^password$/i), 'DemoPass123!')
-      await user.type(screen.getByLabelText(/confirm password/i), 'DemoPass123!')
+      await user.type(screen.getByLabelText(/^confirm password$/i), 'DemoPass123!')
       await user.click(screen.getByRole('button', { name: /create account/i }))
 
       // GuestOnly briefly renders the gate inside the public shell before the workspace

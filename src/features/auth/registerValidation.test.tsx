@@ -156,7 +156,7 @@ async function fillValidRegistration(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/full name/i), 'New Participant')
   await user.type(screen.getByLabelText(/^email$/i), 'new@example.com')
   await user.type(screen.getByLabelText(/^password$/i), 'DemoPass123!')
-  await user.type(screen.getByLabelText(/confirm password/i), 'DemoPass123!')
+  await user.type(screen.getByLabelText(/^confirm password$/i), 'DemoPass123!')
 }
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))

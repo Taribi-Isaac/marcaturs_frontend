@@ -1,25 +1,34 @@
 /**
  * Official MarcatursHub social destinations.
  *
- * URLs are optional build-time public env values. Empty / unset means the
- * destination has not been Product-confirmed — do not invent company URLs.
+ * Product-confirmed profiles are the defaults, so local development shows them
+ * without extra environment variables. A build-time VITE_SOCIAL_* value may
+ * override one profile when it is an absolute http(s) URL.
  */
 export type SocialNetwork = {
-  id: 'facebook' | 'instagram' | 'linkedin'
+  id: 'facebook' | 'instagram' | 'linkedin' | 'tiktok' | 'x'
   label: string
-  /** Absolute https URL when Product has confirmed the official profile. */
+  /** Absolute http(s) URL for the official profile. */
   href: string | null
 }
 
-function readOptionalUrl(value: string | undefined): string | null {
+const officialSocialUrls = {
+  facebook: 'https://www.facebook.com/marcaturshub',
+  instagram: 'https://www.instagram.com/marcaturshub',
+  linkedin: 'https://www.linkedin.com/company/marcaturshub',
+  tiktok: 'https://www.tiktok.com/@marcaturshub',
+  x: 'https://x.com/MarcatursHub',
+} as const
+
+function readSocialUrl(value: string | undefined, officialUrl: string): string {
   const trimmed = value?.trim()
-  if (!trimmed) return null
+  if (!trimmed) return officialUrl
   try {
     const url = new URL(trimmed)
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return officialUrl
     return url.toString()
   } catch {
-    return null
+    return officialUrl
   }
 }
 
@@ -27,16 +36,26 @@ export const companySocialLinks: SocialNetwork[] = [
   {
     id: 'facebook',
     label: 'Facebook',
-    href: readOptionalUrl(import.meta.env.VITE_SOCIAL_FACEBOOK_URL),
+    href: readSocialUrl(import.meta.env.VITE_SOCIAL_FACEBOOK_URL, officialSocialUrls.facebook),
   },
   {
     id: 'instagram',
     label: 'Instagram',
-    href: readOptionalUrl(import.meta.env.VITE_SOCIAL_INSTAGRAM_URL),
+    href: readSocialUrl(import.meta.env.VITE_SOCIAL_INSTAGRAM_URL, officialSocialUrls.instagram),
   },
   {
     id: 'linkedin',
     label: 'LinkedIn',
-    href: readOptionalUrl(import.meta.env.VITE_SOCIAL_LINKEDIN_URL),
+    href: readSocialUrl(import.meta.env.VITE_SOCIAL_LINKEDIN_URL, officialSocialUrls.linkedin),
+  },
+  {
+    id: 'tiktok',
+    label: 'TikTok',
+    href: readSocialUrl(import.meta.env.VITE_SOCIAL_TIKTOK_URL, officialSocialUrls.tiktok),
+  },
+  {
+    id: 'x',
+    label: 'X',
+    href: readSocialUrl(import.meta.env.VITE_SOCIAL_X_URL, officialSocialUrls.x),
   },
 ]
