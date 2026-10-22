@@ -74,6 +74,12 @@ export async function apiRequestResult<T>(
 
   const payload = (await parseJsonSafe(response)) as ApiEnvelope<T> | null
 
+  if (response.ok && response.status === 204) {
+    return {
+      data: undefined as T,
+    }
+  }
+
   if (!response.ok) {
     if (response.status === 401 && notifyOnUnauthorized) {
       notifyUnauthorized()

@@ -216,6 +216,22 @@ const server = setupServer(
       },
     })
   }),
+  http.get('/api/v1/ambassadors/campaign-bookmarks', () =>
+    HttpResponse.json({
+      success: true,
+      data: [],
+      meta: {
+        pagination: {
+          current_page: 1,
+          per_page: 100,
+          total: 0,
+          last_page: 1,
+          from: null,
+          to: null,
+        },
+      },
+    }),
+  ),
   http.get('/api/v1/marketplace/campaigns/:id', ({ params }) => {
     if (Number(params.id) !== campaignCard.id) {
       return HttpResponse.json(

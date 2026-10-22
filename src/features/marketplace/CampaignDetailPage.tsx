@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AmbassadorResourceImage } from '@/features/ambassador-deals/AmbassadorResourceImage'
 import { marketplaceResourceDownloadUrl } from '@/features/ambassador-deals/api'
 import { campaignAllowsNewDeals } from '@/features/ambassador-deals/helpers'
+import { CampaignBookmarkControl } from '@/features/campaign-bookmarks/CampaignBookmarkControl'
 import { useAuth } from '@/features/auth/authContext'
 import { CampaignCoverVisual } from '@/features/marketplace/CampaignCoverVisual'
 import { fetchMarketplaceCampaign } from '@/features/marketplace/api'
@@ -129,10 +130,7 @@ export function CampaignDetailPage() {
   const ogImage = coverAvailable
     ? toAbsolutePublicUrl(coverImageSrc(campaign.cover_image?.url))
     : null
-  const metaDescription = [
-    campaign.product_name || campaign.title,
-    formatCommission(campaign),
-  ]
+  const metaDescription = [campaign.product_name || campaign.title, formatCommission(campaign)]
     .filter(Boolean)
     .join(' — ')
 
@@ -293,8 +291,7 @@ export function CampaignDetailPage() {
                 </div>
               ) : null}
               <div className="alert alert--info">
-                Customers pay the Business directly. More information on the Official
-                Payment page.
+                Customers pay the Business directly. More information on the Official Payment page.
                 {(campaign.payment_destination_name || campaign.payment_provider) && (
                   <p className="detail-commercial__payment-note">
                     <strong>{campaign.payment_destination_name || 'Business destination'}</strong>
@@ -306,6 +303,9 @@ export function CampaignDetailPage() {
               {isAmbassador ? (
                 eligible ? (
                   <>
+                    {status === 'authenticated' ? (
+                      <CampaignBookmarkControl campaignId={campaign.id} title={campaign.title} />
+                    ) : null}
                     <ButtonLink to={`/app/ambassador/deals/new?campaign=${campaign.id}`}>
                       Create Deal
                     </ButtonLink>

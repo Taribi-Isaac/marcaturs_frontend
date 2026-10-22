@@ -5,6 +5,7 @@ import { Button } from '@/shared/ui/Button'
 const ambassadorLinks = [
   { to: '/app/ambassador', end: true, label: 'Home' },
   { to: '/app/ambassador/discover', label: 'Discover' },
+  { to: '/app/ambassador/saved', label: 'Saved' },
   { to: '/app/ambassador/deals', label: 'Deals' },
   { to: '/app/ambassador/earnings', label: 'Earnings' },
   { to: '/app/ambassador/messages', label: 'Messages' },
