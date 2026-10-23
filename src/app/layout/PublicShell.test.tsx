@@ -147,6 +147,7 @@ describe('public footer social links', () => {
       ['LinkedIn', 'https://www.linkedin.com/company/marcaturshub'],
       ['TikTok', 'https://www.tiktok.com/@marcaturshub'],
       ['X', 'https://x.com/MarcatursHub'],
+      ['YouTube', 'https://www.youtube.com/channel/UCfY4uW6OeOoZNMF1TOkaTBw'],  
     ] as const
 
     for (const [label, href] of profiles) {

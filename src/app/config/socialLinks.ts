@@ -6,7 +6,7 @@
  * override one profile when it is an absolute http(s) URL.
  */
 export type SocialNetwork = {
-  id: 'facebook' | 'instagram' | 'linkedin' | 'tiktok' | 'x'
+  id: 'facebook' | 'instagram' | 'linkedin' | 'tiktok' | 'x' | 'YouTube'
   label: string
   /** Absolute http(s) URL for the official profile. */
   href: string | null
@@ -18,6 +18,7 @@ const officialSocialUrls = {
   linkedin: 'https://www.linkedin.com/company/marcaturshub',
   tiktok: 'https://www.tiktok.com/@marcaturshub',
   x: 'https://x.com/MarcatursHub',
+  YouTube: 'https://www.youtube.com/channel/UCfY4uW6OeOoZNMF1TOkaTBw',
 } as const
 
 function readSocialUrl(value: string | undefined, officialUrl: string): string {
@@ -57,5 +58,10 @@ export const companySocialLinks: SocialNetwork[] = [
     id: 'x',
     label: 'X',
     href: readSocialUrl(import.meta.env.VITE_SOCIAL_X_URL, officialSocialUrls.x),
+  },
+  {
+    id: 'YouTube',
+    label: 'YouTube',
+    href: readSocialUrl(import.meta.env.VITE_SOCIAL_YOUTUBE_URL, officialSocialUrls.YouTube),
   },
 ]
