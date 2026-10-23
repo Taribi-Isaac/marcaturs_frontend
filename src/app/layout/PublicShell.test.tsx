@@ -147,6 +147,7 @@ describe('public footer social links', () => {
       ['LinkedIn', 'https://www.linkedin.com/company/marcaturshub'],
       ['TikTok', 'https://www.tiktok.com/@marcaturshub'],
       ['X', 'https://x.com/MarcatursHub'],
+      ['YouTube', 'https://www.youtube.com/channel/UCfY4uW6OeOoZNMF1TOkaTBw'],  
     ] as const
 
     for (const [label, href] of profiles) {
@@ -157,7 +158,7 @@ describe('public footer social links', () => {
       expect(link).toHaveTextContent(label)
     }
 
-    expect(within(footer).getAllByRole('link', { name: /\(opens in a new tab\)/ })).toHaveLength(5)
+    expect(within(footer).getAllByRole('link', { name: /\(opens in a new tab\)/ })).toHaveLength(6)
     expect(within(footer).queryByText(/awaiting confirmation/i)).not.toBeInTheDocument()
   })
 })

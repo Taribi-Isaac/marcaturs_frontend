@@ -228,8 +228,7 @@ export function HomePage() {
                 eyebrow="Trust"
                 title="Customers pay businesses directly. Commissions move the same way."
               >
-                MarcatursHub coordinates campaigns, Deals, evidence, confirmation and disputes. In
-                the MVP, it does not hold customer purchase funds or ambassador commission money.
+                MarcatursHub coordinates campaigns, Deals, evidence, confirmation and disputes. It does not hold customer purchase funds or ambassador commission money.
                 Trust is built through clear terms, verification, evidence and accountable records.
               </SectionHeading>
               <div className="money-flow money-flow--compact">
