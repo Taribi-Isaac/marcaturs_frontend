@@ -158,7 +158,7 @@ describe('public footer social links', () => {
       expect(link).toHaveTextContent(label)
     }
 
-    expect(within(footer).getAllByRole('link', { name: /\(opens in a new tab\)/ })).toHaveLength(5)
+    expect(within(footer).getAllByRole('link', { name: /\(opens in a new tab\)/ })).toHaveLength(6)
     expect(within(footer).queryByText(/awaiting confirmation/i)).not.toBeInTheDocument()
   })
 })
