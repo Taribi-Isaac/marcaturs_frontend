@@ -70,10 +70,17 @@ export async function forgotPasswordRequest(
   })
 }
 
+export type ResetPasswordResult = {
+  message: string
+  user?: {
+    role?: string
+  }
+}
+
 export async function resetPasswordRequest(
   payload: ResetPasswordPayload,
-): Promise<{ message: string }> {
-  return apiRequest<{ message: string }>('/auth/reset-password', {
+): Promise<ResetPasswordResult> {
+  return apiRequest<ResetPasswordResult>('/auth/reset-password', {
     method: 'POST',
     body: payload,
     notifyOnUnauthorized: false,

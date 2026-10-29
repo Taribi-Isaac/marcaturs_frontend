@@ -1,6 +1,6 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { AppProviders } from '@/app/providers'
@@ -9,6 +9,7 @@ import { AppRouter } from '@/app/router'
 
 let lastResetBody: Record<string, unknown> | null = null
 let resetHandlerMode: 'ok' | 'invalid' | 'validation' | 'rate' | 'server' = 'ok'
+let resetUserRole: string | null = 'BUSINESS'
 
 const server = setupServer(
   http.get('/sanctum/csrf-cookie', () => new HttpResponse(null, { status: 204 })),
@@ -87,7 +88,10 @@ const server = setupServer(
     }
     return HttpResponse.json({
       success: true,
-      data: { message: 'Your password has been reset.' },
+      data: {
+        message: 'Your password has been reset.',
+        ...(resetUserRole ? { user: { role: resetUserRole } } : {}),
+      },
     })
   }),
 )
@@ -109,12 +113,16 @@ describe('MH-FE-022 password reset', () => {
     server.resetHandlers()
     lastResetBody = null
     resetHandlerMode = 'ok'
+    resetUserRole = 'BUSINESS'
+    vi.unstubAllEnvs()
   })
   afterAll(() => server.close())
 
   beforeEach(() => {
     lastResetBody = null
     resetHandlerMode = 'ok'
+    resetUserRole = 'BUSINESS'
+    vi.stubEnv('VITE_ADMIN_FRONTEND_URL', 'http://localhost:5174')
   })
 
   it('renders forgot-password and shows anti-enumeration success', async () => {
@@ -163,8 +171,70 @@ describe('MH-FE-022 password reset', () => {
 
     expect(await screen.findByRole('heading', { name: /password updated/i })).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent(/your password has been reset/i)
-    const signInLinks = screen.getAllByRole('link', { name: /sign in/i })
-    expect(signInLinks.some((link) => link.getAttribute('href') === '/login')).toBe(true)
+    expect(screen.getByRole('link', { name: 'Sign in to MarcatursHub' })).toHaveAttribute(
+      'href',
+      '/login',
+    )
+    expect(screen.queryByRole('link', { name: 'Administrator sign in' })).not.toBeInTheDocument()
+    expect(window.location.pathname).toBe('/reset-password')
+    expect(window.location.search).toBe('')
+    expect(document.body.textContent).not.toContain('demo-token')
+  })
+
+  it('sends an administrator to Admin Control sign-in', async () => {
+    const user = userEvent.setup()
+    resetUserRole = 'ADMIN'
+    renderApp('/reset-password?token=demo-token&email=admin%40example.com&redirect=https://evil.example')
+
+    await user.type(screen.getByLabelText(/^new password$/i), 'NewPass123!')
+    await user.type(screen.getByLabelText(/confirm new password/i), 'NewPass123!')
+    await user.click(screen.getByRole('button', { name: /^reset password$/i }))
+
+    const adminLink = await screen.findByRole('link', { name: 'Administrator sign in' })
+    expect(adminLink).toHaveAttribute('href', 'http://localhost:5174/login')
+    expect(screen.queryByRole('link', { name: 'Sign in to MarcatursHub' })).not.toBeInTheDocument()
+    expect(window.location.href).not.toContain('evil.example')
+    expect(window.location.search).toBe('')
+    for (const link of screen.getAllByRole('link')) {
+      expect(link.getAttribute('href')).not.toContain('evil.example')
+    }
+  })
+
+  it('offers both sign-in destinations when the reset response has no role', async () => {
+    const user = userEvent.setup()
+    resetUserRole = null
+    renderApp('/reset-password?token=demo-token&email=ada@example.com')
+
+    await user.type(screen.getByLabelText(/^new password$/i), 'NewPass123!')
+    await user.type(screen.getByLabelText(/confirm new password/i), 'NewPass123!')
+    await user.click(screen.getByRole('button', { name: /^reset password$/i }))
+
+    expect(await screen.findByRole('link', { name: 'Sign in to MarcatursHub' })).toHaveAttribute(
+      'href',
+      '/login',
+    )
+    expect(screen.getByRole('link', { name: 'Administrator sign in' })).toHaveAttribute(
+      'href',
+      'http://localhost:5174/login',
+    )
+  })
+
+  it('does not link an administrator to an invalid admin origin', async () => {
+    const user = userEvent.setup()
+    resetUserRole = 'ADMIN'
+    vi.stubEnv('VITE_ADMIN_FRONTEND_URL', 'https://admin.example.test/phish')
+    renderApp('/reset-password?token=demo-token&email=admin@example.com')
+
+    await user.type(screen.getByLabelText(/^new password$/i), 'NewPass123!')
+    await user.type(screen.getByLabelText(/confirm new password/i), 'NewPass123!')
+    await user.click(screen.getByRole('button', { name: /^reset password$/i }))
+
+    expect(await screen.findByRole('heading', { name: /password updated/i })).toBeInTheDocument()
+    expect(
+      screen.getByText('Administrator sign-in is not configured for this application.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Administrator sign in' })).not.toBeInTheDocument()
+    expect(window.location.href).not.toContain('phish')
   })
 
   it('blocks submit when passwords do not match', async () => {

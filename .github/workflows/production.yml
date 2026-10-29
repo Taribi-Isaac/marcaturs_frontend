@@ -14,7 +14,8 @@ name: Production
 # Environment "production" must define:
 #   secrets: CLOUDFLARE_API_TOKEN (Pages:Edit only), CLOUDFLARE_ACCOUNT_ID
 #   vars:    CF_PAGES_PROJECT, VITE_API_BASE_URL, VITE_BACKEND_ORIGIN, VITE_PUBLIC_ORIGIN,
-#            VITE_REVERB_APP_KEY, VITE_REVERB_HOST, VITE_REVERB_PORT, VITE_REVERB_SCHEME
+#            VITE_ADMIN_FRONTEND_URL, VITE_REVERB_APP_KEY, VITE_REVERB_HOST,
+#            VITE_REVERB_PORT, VITE_REVERB_SCHEME
 #
 # VITE_* values are compiled into the public bundle. VITE_REVERB_APP_KEY is the
 # backend's public REVERB_APP_KEY — never REVERB_APP_SECRET.
@@ -56,6 +57,7 @@ jobs:
       VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
       VITE_BACKEND_ORIGIN: ${{ vars.VITE_BACKEND_ORIGIN }}
       VITE_PUBLIC_ORIGIN: ${{ vars.VITE_PUBLIC_ORIGIN }}
+      VITE_ADMIN_FRONTEND_URL: ${{ vars.VITE_ADMIN_FRONTEND_URL }}
       VITE_REVERB_APP_KEY: ${{ vars.VITE_REVERB_APP_KEY }}
       VITE_REVERB_HOST: ${{ vars.VITE_REVERB_HOST }}
       VITE_REVERB_PORT: ${{ vars.VITE_REVERB_PORT }}
@@ -98,6 +100,7 @@ jobs:
           check VITE_API_BASE_URL '^https://[A-Za-z0-9.-]+(/[A-Za-z0-9._~-]+)+$' "an absolute production https:// API URL"
           check VITE_BACKEND_ORIGIN '^https://[A-Za-z0-9.-]+$' "a production https:// origin without a path"
           check VITE_PUBLIC_ORIGIN '^https://[A-Za-z0-9.-]+$' "a production https:// origin without a path or trailing slash"
+          check VITE_ADMIN_FRONTEND_URL '^https://[A-Za-z0-9.-]+$' "a production https:// origin without a path or trailing slash"
           check VITE_REVERB_HOST '^[A-Za-z0-9.-]+$' "a bare production hostname"
           check VITE_REVERB_APP_KEY '^[A-Za-z0-9_-]+$' "the public Reverb app key"
           [ "$VITE_REVERB_PORT" = "443" ] || { echo "::error::VITE_REVERB_PORT must be 443"; fail=1; }

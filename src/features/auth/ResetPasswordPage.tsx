@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { resolveAdminLoginUrl } from '@/app/config/env'
 import { resetPasswordRequest } from '@/features/auth/api'
 import { fieldErrorsFromApi } from '@/features/ambassador-deals/helpers'
 import { ApiClientError } from '@/shared/api/errors'
@@ -20,6 +21,48 @@ const schema = z
   })
 
 type FormValues = z.infer<typeof schema>
+type SignInDestination = 'participant' | 'admin' | 'unspecified'
+
+function signInDestination(role: unknown): SignInDestination {
+  if (role === 'ADMIN') return 'admin'
+  if (role === 'BUSINESS' || role === 'AMBASSADOR') return 'participant'
+  return 'unspecified'
+}
+
+function ResetSuccessActions({ destination }: { destination: SignInDestination }) {
+  const adminLoginUrl = resolveAdminLoginUrl()
+  const participantLink = <ButtonLink to="/login">Sign in to MarcatursHub</ButtonLink>
+  const adminLink = adminLoginUrl ? (
+    <a className="btn btn--primary" href={adminLoginUrl}>
+      Administrator sign in
+    </a>
+  ) : null
+
+  if (destination === 'participant') {
+    return participantLink
+  }
+
+  if (destination === 'admin') {
+    return (
+      adminLink ?? (
+        <p>Administrator sign-in is not configured for this application.</p>
+      )
+    )
+  }
+
+  if (!adminLoginUrl) {
+    return <div className="stack">{participantLink}</div>
+  }
+
+  return (
+    <div className="stack">
+      {participantLink}
+      <a className="btn btn--secondary" href={adminLoginUrl}>
+        Administrator sign in
+      </a>
+    </div>
+  )
+}
 
 function readResetParams(params: URLSearchParams): { email: string; token: string } | null {
   const email = (params.get('email') ?? '').trim()
@@ -35,15 +78,35 @@ function readResetParams(params: URLSearchParams): { email: string; token: strin
  * a participant already has an active SPA session in the same browser.
  */
 export function ResetPasswordPage() {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const resetParams = useMemo(() => readResetParams(searchParams), [searchParams])
   const [formError, setFormError] = useState<string | null>(null)
   const [invalidLink, setInvalidLink] = useState(false)
   const [succeeded, setSucceeded] = useState(false)
+  const [destination, setDestination] = useState<SignInDestination>('unspecified')
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { password: '', password_confirmation: '' },
   })
+
+  if (succeeded) {
+    return (
+      <>
+        <PageMeta title="Password reset" description="Your MarcatursHub password was updated." />
+        <div className="auth-panel">
+          <h1>Password updated</h1>
+          <p className="auth-panel__lead">
+            Your password has been reset. Sign in with your new password to continue.
+          </p>
+          <div className="alert alert--success" role="status" style={{ marginBottom: '1rem' }}>
+            Your password has been reset.
+          </div>
+          <ResetSuccessActions destination={destination} />
+        </div>
+      </>
+    )
+  }
 
   if (!resetParams) {
     return (
@@ -62,24 +125,6 @@ export function ResetPasswordPage() {
             {' · '}
             <Link to="/login">Sign in</Link>
           </p>
-        </div>
-      </>
-    )
-  }
-
-  if (succeeded) {
-    return (
-      <>
-        <PageMeta title="Password reset" description="Your MarcatursHub password was updated." />
-        <div className="auth-panel">
-          <h1>Password updated</h1>
-          <p className="auth-panel__lead">
-            Your password has been reset. Sign in with your new password to continue.
-          </p>
-          <div className="alert alert--success" role="status" style={{ marginBottom: '1rem' }}>
-            Your password has been reset.
-          </div>
-          <ButtonLink to="/login">Sign in</ButtonLink>
         </div>
       </>
     )
@@ -127,14 +172,16 @@ export function ResetPasswordPage() {
           onSubmit={form.handleSubmit(async (values) => {
             setFormError(null)
             try {
-              await resetPasswordRequest({
+              const result = await resetPasswordRequest({
                 email: resetParams.email,
                 token: resetParams.token,
                 password: values.password,
                 password_confirmation: values.password_confirmation,
               })
+              setDestination(signInDestination(result.user?.role))
               setSucceeded(true)
               form.reset({ password: '', password_confirmation: '' })
+              navigate('/reset-password', { replace: true })
             } catch (error) {
               if (error instanceof ApiClientError) {
                 if (error.code === 'business_validation') {
