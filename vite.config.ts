@@ -46,6 +46,9 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'jsdom',
       globals: true,
+      env: {
+        VITE_ADMIN_FRONTEND_URL: 'http://localhost:5174',
+      },
       setupFiles: ['./src/test/setup.ts'],
       css: true,
       include: ['src/**/*.{test,spec}.{ts,tsx}'],
