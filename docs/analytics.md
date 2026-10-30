@@ -55,4 +55,6 @@ Failed requests do not emit the completion event. Names, emails, phone numbers, 
 
 The banner is shown only when the tag is actually configured. Allow loads the tag. Don't allow stores a denial and does not load it. The privacy page can change the choice later. Denial also clears `_ga` cookies this site can see.
 
-Production collection remains off until `VITE_GA_MEASUREMENT_ID` is set on the participant production environment and a build that includes it is deployed.
+The gtag queue stores each command as an `arguments` object. The Google tag ignores a plain array, so the script can load and still send no hit.
+
+Production collection starts only when `VITE_GA_MEASUREMENT_ID` is set on the participant production environment and a build that includes it is deployed. The tag still waits for Allow.

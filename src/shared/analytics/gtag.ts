@@ -19,8 +19,11 @@ declare global {
 export function installGtag(measurementId: string): void {
   window.dataLayer = window.dataLayer ?? []
   if (!window.gtag) {
-    window.gtag = function gtag(...args: unknown[]) {
-      window.dataLayer?.push(args)
+    // The Google tag only runs commands stored as an `arguments` object.
+    // A real array is left in the queue and no hit is sent.
+    window.gtag = function gtag() {
+      // eslint-disable-next-line prefer-rest-params -- gtag.js ignores a real array
+      window.dataLayer?.push(arguments)
     }
   }
   if (document.querySelector(`script[${SCRIPT_ATTR}="${measurementId}"]`)) {

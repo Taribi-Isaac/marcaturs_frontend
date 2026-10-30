@@ -17,7 +17,11 @@ describe('gtag install', () => {
       'https://www.googletagmanager.com/gtag/js?id=G-TESTONLY1',
     )
     expect(document.head.innerHTML).not.toContain('G-X3V7CW4V7V')
-    expect(window.dataLayer).toEqual(
+    const commands = (window.dataLayer ?? []).map((entry) =>
+      Array.from(entry as ArrayLike<unknown>),
+    )
+    expect(Array.isArray(window.dataLayer?.[0])).toBe(false)
+    expect(commands).toEqual(
       expect.arrayContaining([
         ['consent', 'default', expect.objectContaining({ analytics_storage: 'denied' })],
         [
@@ -38,7 +42,7 @@ describe('gtag install', () => {
     const script = document.head.querySelector('script[data-mh-ga]')
     expect(() => script?.dispatchEvent(new Event('error'))).not.toThrow()
     disableGtag()
-    expect(window.dataLayer?.at(-1)).toEqual([
+    expect(Array.from((window.dataLayer?.at(-1) ?? []) as ArrayLike<unknown>)).toEqual([
       'consent',
       'update',
       expect.objectContaining({ analytics_storage: 'denied' }),
