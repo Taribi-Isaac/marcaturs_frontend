@@ -13,5 +13,5 @@ Disallow: /reset-password
 Disallow: /forbidden
 Disallow: /account-blocked
 
-# Sitemap deferred: dynamic public Campaign URLs require a dedicated public sitemap
-# endpoint or build-time generation — see frontend/docs/seo.md
+# The production build adds a Sitemap line when VITE_PUBLIC_ORIGIN is a bare origin.
+# See docs/seo.md. Do not add /app, /pay, or authentication URLs to the sitemap.

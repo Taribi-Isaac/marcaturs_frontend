@@ -48,24 +48,32 @@ Served from `frontend/public/robots.txt`.
 - Advisory only — **not** authorization.
 - Disallows auth, `/app/`, `/pay/`, and utility paths.
 - Does **not** list private URLs as “protected.”
-- No Sitemap line (sitemap deferred).
+- The committed file has no host-specific Sitemap line.
+- `vite build` appends `Sitemap: {VITE_PUBLIC_ORIGIN}/sitemap.xml` when that variable is a bare origin. A local build without it leaves the file unchanged.
 
 ## Sitemap
 
-**Deferred.** A truthful Campaign sitemap needs either:
+Generated into `dist/sitemap.xml` by the production build. It lists the fixed public marketing and marketplace routes, plus `/campaigns/{id}` for campaigns returned by the public marketplace index at build time.
 
-1. a public backend sitemap endpoint listing only currently public Campaigns, or  
-2. a build-time generator fed by that API.
+The public index is the visibility rule: active or expiring, published current version, assignable category, and an active business account. The generator does not invent campaign ids and does not list `/app`, `/pay`, authentication, or payment-token URLs. Query-string filters on `/discover` are not separate URLs.
 
-The SPA cannot invent Campaign URLs. Do not ship a static placeholder sitemap.
+Campaign entries refresh on the next frontend production build. There is no request-time sitemap on the Pages host. A cross-host API sitemap was not added, because Google may not use a sitemap on another host until Search Console verifies that host.
+
+A successful public index with an empty `data` array is an authoritative empty campaign list. If `VITE_API_BASE_URL` is set and the fetch fails, returns a non-200 status, or is not the public index shape, the build stops. That failure is not written out as zero campaigns. If the API base is unset, the build lists only the fixed public routes.
+
+If `VITE_PUBLIC_ORIGIN` is missing or not a bare origin, the build does not write a sitemap and does not guess a host. `public/_headers` sets `Content-Type: application/xml; charset=utf-8` for `/sitemap.xml`.
 
 ## Structured data (JSON-LD)
 
-**Deferred.** Authoritative docs do not define Organization/Product/Offer facts sufficient for honest schema; marketplace commission/price fields must not be fabricated as structured offers.
+The same production build adds an Organization object: name, public URL, the existing site description, and the official profile URLs already used in the footer. It does not describe a Product or Offer, and it does not invent a price or a commission.
+
+## Crawler-visible shell
+
+`index.html` includes the existing title, description, and a `noscript` block with the public navigation. Route-specific titles and canonical URLs still require JavaScript. Full server rendering remains out of scope.
 
 ## SPA crawl limitation
 
-This is a client-rendered Vite/React Router SPA. Document head updates run in the browser after JS execution. Crawlers that do not execute JS will see `index.html` shell metadata only. Full SSR/SSG is **out of scope** for MH-FE-023 (explicit exclusion).
+This is a client-rendered Vite/React Router SPA. Document head updates for each route run in the browser after JS execution. Crawlers that do not execute JS see the shell title, description, noscript links, and, on a production build, the Organization object. They do not see route-specific titles. Full SSR/SSG remains out of scope.
 
 ## Security
 

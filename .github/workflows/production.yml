@@ -119,6 +119,14 @@ jobs:
             exit 1
           fi
           grep -q '<div id="root"' dist/index.html || { echo "::error::dist/index.html has no div#root"; exit 1; }
+          grep -q '<urlset' dist/sitemap.xml || { echo "::error::dist/sitemap.xml is missing"; exit 1; }
+          grep -q "${VITE_PUBLIC_ORIGIN}/discover" dist/sitemap.xml || { echo "::error::Sitemap is missing the public discover URL"; exit 1; }
+          grep -q "Sitemap: ${VITE_PUBLIC_ORIGIN}/sitemap.xml" dist/robots.txt || { echo "::error::robots.txt is missing the sitemap declaration"; exit 1; }
+          if grep -E -q '/app/|/login|/pay/|/forgot-password|/reset-password' dist/sitemap.xml; then
+            echo "::error::Sitemap contains a private route"
+            exit 1
+          fi
+          grep -q 'application/ld+json' dist/index.html || { echo "::error::Organization JSON-LD is missing"; exit 1; }
           for name in VITE_API_BASE_URL VITE_REVERB_HOST VITE_REVERB_APP_KEY; do
             grep -rqF -- "${!name}" dist/assets || { echo "::error::Bundle does not contain $name"; exit 1; }
           done
