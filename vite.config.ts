@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { loadEnv } from 'vite'
 import { defineConfig } from 'vitest/config'
+import { publicSeoPlugin } from './src/shared/seo/publicSeoPlugin'
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 
@@ -11,7 +12,7 @@ export default defineConfig(({ mode }) => {
   const backendOrigin = env.VITE_BACKEND_ORIGIN || 'http://localhost:8000'
 
   return {
-    plugins: [react()],
+    plugins: [react(), publicSeoPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(rootDir, './src'),
