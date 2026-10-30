@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { fetchMarketplaceCampaign } from '@/features/marketplace/api'
 import { businessDisplayName, formatCommission, formatMoney } from '@/features/marketplace/format'
 import { ApiClientError } from '@/shared/api/errors'
+import { trackDealStart } from '@/shared/analytics/track'
 import { Button, ButtonLink } from '@/shared/ui/Button'
 import { ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
 import { createDeal } from './api'
@@ -37,6 +38,7 @@ export function CreateDealPage() {
       return createDeal(payload)
     },
     onSuccess: async (deal) => {
+      trackDealStart(campaignId)
       await queryClient.invalidateQueries({ queryKey: dealKeys.list() })
       queryClient.setQueryData(dealKeys.detail(deal.id), deal)
       navigate(`/app/ambassador/deals/${deal.id}`, { replace: true })

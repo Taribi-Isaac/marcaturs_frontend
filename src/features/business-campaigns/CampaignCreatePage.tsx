@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { ApiClientError } from '@/shared/api/errors'
+import { trackCampaignCreate } from '@/shared/analytics/track'
 import { Button, ButtonLink } from '@/shared/ui/Button'
 import { ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
 import { createCampaign, fetchCategories } from './api'
@@ -36,6 +37,7 @@ export function CampaignCreatePage() {
   const create = useMutation({
     mutationFn: createCampaign,
     onSuccess: async (campaign) => {
+      trackCampaignCreate(campaign.id)
       await queryClient.invalidateQueries({ queryKey: businessCampaignKeys.list() })
       navigate(`/app/business/campaigns/${campaign.id}?tab=version`, {
         replace: true,

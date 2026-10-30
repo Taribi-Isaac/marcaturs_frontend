@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth/authContext'
 import { homePathForRole } from '@/features/auth/authHelpers'
 import { PasswordField } from '@/features/auth/PasswordField'
 import { ApiClientError } from '@/shared/api/errors'
+import { trackLogin } from '@/shared/analytics/track'
 import { Button } from '@/shared/ui/Button'
 import { PageMeta } from '@/shared/ui/States'
 
@@ -52,6 +53,7 @@ export function LoginPage() {
             setFormError(null)
             try {
               const user = await login(values)
+              trackLogin()
               const from = (location.state as { from?: string } | null)?.from
               const next = new URLSearchParams(location.search).get('next')
               const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : null

@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AmbassadorResourceImage } from '@/features/ambassador-deals/AmbassadorResourceImage'
 import { marketplaceResourceDownloadUrl } from '@/features/ambassador-deals/api'
@@ -13,6 +13,7 @@ import type { MarketplaceMarketingResource } from '@/features/marketplace/types'
 import { openConversation } from '@/features/participant-messages/api'
 import { downloadAuthenticatedFile } from '@/shared/api/download'
 import { ApiClientError } from '@/shared/api/errors'
+import { trackCampaignView } from '@/shared/analytics/track'
 import { Button, ButtonLink } from '@/shared/ui/Button'
 import { ErrorState, LoadingState, PageMeta } from '@/shared/ui/States'
 import { coverImageSrc } from '@/features/marketplace/cover'
@@ -91,6 +92,12 @@ export function CampaignDetailPage() {
       navigate(`/app/ambassador/messages/${result.data.id}`)
     },
   })
+
+  useEffect(() => {
+    if (query.isSuccess && query.data && query.data.id > 0) {
+      trackCampaignView(query.data.id)
+    }
+  }, [query.isSuccess, query.data])
 
   const messageError =
     messageBusiness.error instanceof ApiClientError

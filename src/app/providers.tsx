@@ -4,6 +4,8 @@ import { useState, type ReactNode } from 'react'
 import type { QueryClient } from '@tanstack/react-query'
 import { AuthProvider } from '@/features/auth/AuthProvider'
 import { createQueryClient } from '@/app/queryClient'
+import { AnalyticsConsentBanner } from '@/shared/analytics/AnalyticsConsentBanner'
+import { AnalyticsRouteTracker } from '@/shared/analytics/AnalyticsRouteTracker'
 import { SeoRouteSync } from '@/shared/seo/SeoRouteSync'
 
 export function AppProviders({
@@ -22,6 +24,8 @@ export function AppProviders({
         <AuthProvider>
           <SeoRouteSync />
           {children}
+          <AnalyticsRouteTracker />
+          <AnalyticsConsentBanner />
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
