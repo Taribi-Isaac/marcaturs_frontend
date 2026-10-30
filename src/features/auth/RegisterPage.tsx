@@ -9,6 +9,7 @@ import { homePathForRole } from '@/features/auth/authHelpers'
 import { PasswordField } from '@/features/auth/PasswordField'
 import { registerFieldErrorsFromApi } from '@/features/auth/registerFieldErrors'
 import { ApiClientError } from '@/shared/api/errors'
+import { trackSignUp, trackSignUpStart } from '@/shared/analytics/track'
 import { Button } from '@/shared/ui/Button'
 import { PageMeta } from '@/shared/ui/States'
 
@@ -68,7 +69,9 @@ export function RegisterPage() {
           onSubmit={form.handleSubmit(async (values) => {
             setFormError(null)
             try {
+              trackSignUpStart(values.role)
               const user = await registerAccount(values)
+              trackSignUp(user.role)
               navigate(homePathForRole(user.role), { replace: true })
             } catch (error) {
               if (error instanceof ApiClientError) {

@@ -75,6 +75,10 @@ The same production build adds an Organization object: name, public URL, the exi
 
 This is a client-rendered Vite/React Router SPA. Document head updates for each route run in the browser after JS execution. Crawlers that do not execute JS see the shell title, description, noscript links, and, on a production build, the Organization object. They do not see route-specific titles. Full SSR/SSG remains out of scope.
 
+## Analytics
+
+Product analytics is separate from this indexability work. See `docs/analytics.md`. Google Analytics loads only after consent on a production build with `VITE_GA_MEASUREMENT_ID` set. It is not part of the sitemap or the crawler shell.
+
 ## Security
 
 - `robots.txt` / `noindex` are not access control; Sanctum + route guards remain authoritative.

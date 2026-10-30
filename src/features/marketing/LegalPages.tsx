@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
+import { AnalyticsConsentChoice } from '@/shared/analytics/AnalyticsConsentBanner'
 import { PageMeta, SectionHeading } from '@/shared/ui/States'
 
 const TERMS_EFFECTIVE = '14 September 2026'
@@ -591,8 +592,21 @@ export function PrivacyPage() {
             </li>
           </ul>
           <p>
-            We do not invent analytics or marketing-pixel systems in this Policy. If optional
-            analytics are introduced later, this Policy will be updated.
+            Optional product analytics uses Google Analytics 4, provided by Google, on the
+            participant site only. It stays off unless this production site is configured for it
+            and you choose Allow. We use it to see which pages are visited and whether registration,
+            sign-in, a public campaign view, starting a Deal, or creating a campaign succeeded. The
+            events we send do not include your name, email address, phone number, password, payment
+            details, payment amounts, customer evidence, private Deal content, or an account
+            identifier. Page addresses are sent without query strings. A payment address is reduced
+            to the payment route, and private workspace addresses omit record ids. A page title
+            that contains an email address, a phone number, or a deal number is not sent. A normal
+            analytics request can still include technical data such as IP address, browser
+            information, and, after you allow analytics, a cookie identifier. We do not use this
+            measurement for advertising. Admin Control does not load this tag. You can refuse on
+            the notice, or change the choice in the Cookies section. Choosing Don&apos;t allow stops
+            later events from this browser and clears the analytics cookies this site can remove.
+            It does not delete analytics data Google has already received.
           </p>
         </>
       ),
@@ -735,11 +749,18 @@ export function PrivacyPage() {
       content: (
         <>
           <p>
-            The Platform uses strictly necessary technical storage for authentication/session
-            security and core functionality. This Policy does not claim extensive analytics or
-            advertising cookies. If optional analytics or preference cookies are introduced, we will
-            update this section and obtain any required consent.
+            The Platform uses strictly necessary technical storage for authentication, session
+            security, and core functionality. That storage does not depend on the analytics choice.
+            Optional Google Analytics cookies are stored only after you choose Allow. They are not
+            advertising cookies. The choice is kept in this browser for this hostname only. It is
+            not copied to the Admin site or to another hostname. You can change it at any time
+            with the buttons below. Don&apos;t allow stops further analytics events from this
+            browser and clears the analytics cookies this site can remove. Allow starts measurement
+            again. Google retains analytics data it has already received according to the retention
+            setting on the MarcatursHub Google Analytics property. This analytics description was
+            added on 30 October 2026. The effective date of this Policy remains 14 September 2026.
           </p>
+          <AnalyticsConsentChoice />
         </>
       ),
     },
